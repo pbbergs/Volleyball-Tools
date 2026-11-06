@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Volleyball Tools</title>
 <meta name="theme-color" content="#13263d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Volleyball Tools">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="serve-receive/icon.png">
 <link rel="icon" href="serve-receive/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
@@ -42,6 +47,13 @@ main { padding-block: 24px 48px; padding-left: max(20px, env(safe-area-inset-lef
 .tool p { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
 .go { font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: .04em; text-transform: uppercase;
       background: var(--accent); color: #fff; border-radius: 10px; padding: 10px 16px; white-space: nowrap; }
+.ver { font-size: 12px; opacity: .7; margin-left: 4px; white-space: nowrap; }
+[hidden] { display: none !important; }
+.update { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; align-items: center; justify-content: center; gap: 12px;
+          background: var(--head); color: var(--head-ink); font-weight: 600;
+          padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px));
+          padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.update button { font: inherit; font-size: 15px; background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
 .tip { color: var(--muted); font-size: 14px; margin: 8px 0 0; max-width: 65ch; }
 @media (max-width: 520px) {
   h1 { font-size: 32px; }
@@ -55,7 +67,7 @@ main { padding-block: 24px 48px; padding-left: max(20px, env(safe-area-inset-lef
 <header>
   <div class="in">
     <h1>Volleyball Tools</h1>
-    <p>Simple stat trackers for practice and tryouts.</p>
+    <p>Simple stat trackers for practice and tryouts. <span class="ver" id="ver">v2026.11.06a</span></p>
   </div>
 </header>
 
@@ -70,7 +82,32 @@ main { padding-block: 24px 48px; padding-left: max(20px, env(safe-area-inset-lef
     <span class="go">Open</span>
   </a>
 
-  <p class="tip">On an iPad, open a tool in Safari, then tap Share → Add to Home Screen so it opens like an app and keeps its data.</p>
+  <p class="tip">On an iPhone or iPad, open this page in Safari and tap Share → Add to Home Screen. Then open every tool from the Volleyball Tools icon, so each tool always finds its saved data.</p>
 </main>
+
+<div class="update" id="update" hidden>
+  <span>New version available</span>
+  <button type="button" id="update-btn">Update</button>
+</div>
+
+<script>
+/* Show an Update bar when a newer version of this page is posted. Each tool checks for its own updates the same way. */
+(() => {
+  const VERSION = document.getElementById("ver").textContent.trim();
+  const bar = document.getElementById("update");
+  async function check() {
+    if (!/^https?:$/.test(location.protocol) || document.visibilityState !== "visible") return;
+    try {
+      const res = await fetch(location.pathname, { cache: "reload" });   // also refreshes the saved copy
+      if (!res.ok) return;
+      const m = (await res.text()).match(/id="ver">(v[\w.]+)</);
+      if (m && m[1] !== VERSION) bar.hidden = false;
+    } catch {}
+  }
+  document.getElementById("update-btn").addEventListener("click", () => location.reload());
+  document.addEventListener("visibilitychange", check);
+  setTimeout(check, 1500);
+})();
+</script>
 </body>
 </html>
