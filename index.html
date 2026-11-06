@@ -10,7 +10,13 @@
 <meta name="theme-color" content="#13263d">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="icon.png">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>
+/* Home Screen app: the header itself reaches under the status bar and sticks at the very top, so it can never cover the page. */
+:root{padding-top:0!important;padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+header{top:0!important;padding-top:env(safe-area-inset-top,0px)!important}
+body::before{display:none!important}
+</style>
 </head>
 <body>
 <title>Serve Receive Tracker</title>
@@ -163,6 +169,8 @@ td input.num { width: 64px; }
   .row.head { font-size: 13px; letter-spacing: .04em; }
   .pick button { font-size: 42px; }
 }
+.export { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 600px) { .stats-bar .grow { display: none; } .export { width: 100%; } .export .btn { flex: 1; } }
 .round-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .round-label { font-family: var(--font-display); font-size: 22px; font-weight: 700; overflow-wrap: anywhere; }
@@ -203,11 +211,13 @@ td input.num { width: 64px; }
   </section>
 
   <section id="view-stats" hidden>
-    <div class="bar">
+    <div class="bar stats-bar">
       <label class="chk"><input type="checkbox" id="drill-only"> Only players in the drill</label>
       <span class="grow"></span>
-      <button class="btn" id="copy-stats">Copy for email</button>
-      <button class="btn" id="csv-stats">Download CSV</button>
+      <div class="export">
+        <button class="btn" id="copy-stats">Copy for email</button>
+        <button class="btn" id="csv-stats">Download CSV</button>
+      </div>
     </div>
 
     <div class="sec-head">
@@ -253,6 +263,7 @@ td input.num { width: 64px; }
       </table>
     </div>
     <p class="note">Uncheck “In drill” to hide a player from the Track page without losing her stats.</p>
+    <p class="note">Version 2026-11-06c</p>
   </section>
 </main>
 
