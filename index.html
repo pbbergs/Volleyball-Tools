@@ -11,10 +11,10 @@
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="icon.png">
 <style>
-/* Home Screen app: the header itself reaches under the status bar and sticks at the very top, so it can never cover the page. */
+/* Home Screen app: the header reaches under the status bar and scrolls with the page, so it can never cover anything. */
 :root{padding-top:0!important;padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0}img{max-width:100%}[hidden]{display:none!important}
-header{top:0!important;padding-top:env(safe-area-inset-top,0px)!important}
+header{position:relative!important;top:auto!important;padding-top:env(safe-area-inset-top,0px)!important}
 body::before{display:none!important}
 </style>
 </head>
@@ -171,6 +171,7 @@ td input.num { width: 64px; }
 }
 .export { display: flex; gap: 8px; flex-wrap: wrap; }
 @media (max-width: 600px) { .stats-bar .grow { display: none; } .export { width: 100%; } .export .btn { flex: 1; } }
+.ver { font-family: var(--font-body); font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; opacity: .6; margin-left: 6px; vertical-align: middle; }
 .round-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .round-label { font-family: var(--font-display); font-size: 22px; font-weight: 700; overflow-wrap: anywhere; }
@@ -186,7 +187,7 @@ td input.num { width: 64px; }
 
 <header>
   <div class="head-in">
-    <div class="brand">Serve Receive</div>
+    <div class="brand">Serve Receive <span class="ver">v2026.11.06e</span></div>
     <nav>
       <button id="tab-track" data-view="track">Track</button>
       <button id="tab-stats" data-view="stats">Stats</button>
@@ -263,7 +264,6 @@ td input.num { width: 64px; }
       </table>
     </div>
     <p class="note">Uncheck “In drill” to hide a player from the Track page without losing her stats.</p>
-    <p class="note">Version 2026-11-06c</p>
   </section>
 </main>
 
