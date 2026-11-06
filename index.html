@@ -171,6 +171,10 @@ td input.num { width: 64px; }
 }
 .export { display: flex; gap: 8px; flex-wrap: wrap; }
 @media (max-width: 600px) { .stats-bar .grow { display: none; } .export { width: 100%; } .export .btn { flex: 1; } }
+.update { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; align-items: center; justify-content: center; gap: 12px;
+          background: var(--head); color: var(--head-ink); font-weight: 600;
+          padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px));
+          padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .ver { font-family: var(--font-body); font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; opacity: .6; margin-left: 6px; vertical-align: middle; }
 .round-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
@@ -187,7 +191,7 @@ td input.num { width: 64px; }
 
 <header>
   <div class="head-in">
-    <div class="brand">Serve Receive <span class="ver">v2026.11.06e</span></div>
+    <div class="brand">Serve Receive <span class="ver" id="ver">v2026.11.06f</span></div>
     <nav>
       <button id="tab-track" data-view="track">Track</button>
       <button id="tab-stats" data-view="stats">Stats</button>
@@ -304,6 +308,10 @@ td input.num { width: 64px; }
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<div class="update" id="update" hidden>
+  <span>New version available</span>
+  <button class="btn primary small" id="update-btn">Update</button>
+</div>
 
 <script>
 /* ---------------- state ---------------- */
@@ -702,6 +710,22 @@ $("#csv-stats").addEventListener("click", async () => {
 
 $("#round-pick").addEventListener("change", e => { S.pickRound = e.target.value; renderStats(); });
 $("#drill-only").addEventListener("change", renderStats);
+
+/* ---------------- update check (only when hosted as a web page, e.g. GitHub) ---------------- */
+const VERSION = $("#ver").textContent.trim();
+const hosted = /^https?:$/.test(location.protocol) && !window.claude && !/claude\.ai$/.test(location.hostname);
+async function checkForUpdate() {
+  if (!hosted || document.visibilityState !== "visible") return;
+  try {
+    const res = await fetch(location.pathname, { cache: "reload" });   // also refreshes the saved copy
+    if (!res.ok) return;
+    const m = (await res.text()).match(/id="ver">(v[\w.]+)</);
+    if (m && m[1] !== VERSION) { $("#update").querySelector("span").textContent = `New version available (${m[1]})`; $("#update").hidden = false; }
+  } catch {}
+}
+$("#update-btn").addEventListener("click", () => location.reload());
+document.addEventListener("visibilitychange", checkForUpdate);
+setTimeout(checkForUpdate, 1500);
 
 /* ---------------- start ---------------- */
 const h = (location.hash || "").slice(1);
