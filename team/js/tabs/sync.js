@@ -1,0 +1,83 @@
+// Sync: export this device's data for Home Base, and import files from Home Base or other coaches.
+
+import * as db from "../db.js";
+import * as sync from "../sync.js";
+import { $, esc, sheet, ask, say, toast } from "../ui.js";
+
+const when = iso => (iso ? new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "never");
+const LABELS = { teams: "Teams", staff: "Coaches", players: "Players", roster: "Roster entries", matches: "Matches", sets: "Set scores",
+  actions: "Recorded stats", court_log: "Court changes", duties: "Work duties", work_log: "Work records", links: "Links", settings: "Settings" };
+let lastSummary = null;
+
+async function doExport(ctx) {
+  const data = sync.buildExport();
+  const name = sync.exportFileName();
+  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+  const file = new File([blob], name, { type: "application/json" });
+  let shared = false;
+  try {
+    if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: name }); shared = true; }
+  } catch (e) { if (e?.name === "AbortError") return; }
+  if (!shared) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  await db.setLocal("last_export", db.now());
+  toast("Sync file ready.");
+  ctx.refresh();
+}
+
+async function doImport(file, ctx) {
+  const data = await sync.readFile(file);
+  if (!data) { say("That file couldn't be read. Make sure it's a sync file (.json) exported from the Team app or Home Base."); return; }
+  const res = await sync.importData(data);
+  if (!res.ok) { say(res.error); return; }
+  lastSummary = res;
+  toast("Import finished.");
+  ctx.refresh();
+}
+
+export function render(main, ctx) {
+  const counts = db.tableNames().map(t => [t, db.all(t).length]);
+  const li = db.getLocal("last_import");
+  main.innerHTML = `
+    <section class="card">
+      <h2>Sync</h2>
+      <label class="field">This device's name<input type="text" id="dev" value="${esc(db.deviceName())}" maxlength="40"></label>
+      <p class="muted small" style="margin:0">Shown on sync files and in Home Base, so you can tell whose data is whose.</p>
+    </section>
+
+    <section class="card">
+      <h3>Send data to Home Base</h3>
+      <p class="small" style="margin:0">Creates one file with everything on this phone. Send it to yourself (Mail, Outlook, or Save to Files → OneDrive), then import it in Home Base on the PC.</p>
+      <button class="btn primary" type="button" id="export">Export sync file</button>
+      <p class="muted small" style="margin:0">Last export: ${esc(when(db.getLocal("last_export")))}</p>
+    </section>
+
+    <section class="card">
+      <h3>Bring in data</h3>
+      <p class="small" style="margin:0">Import a setup file from Home Base, or a sync file from another coach. Nothing on this phone is lost: newer changes win, and importing the same file twice changes nothing.</p>
+      <label class="btn" for="imp">Import file…</label><input type="file" id="imp" class="sr" accept=".json,application/json">
+      <p class="muted small" style="margin:0">Last import: ${li ? `${esc(when(li.at))} from ${esc(li.from)}` : "never"}</p>
+      ${lastSummary ? `<div class="scroll"><table><thead><tr><th>From ${esc(lastSummary.from)}</th><th>Added</th><th>Updated</th><th>Already up to date</th></tr></thead>
+        <tbody>${Object.entries(lastSummary.tables).filter(([, s]) => s.added + s.updated + s.skipped + s.invalid)
+          .map(([t, s]) => `<tr><td>${esc(LABELS[t] || t)}</td><td>${s.added}</td><td>${s.updated}</td><td>${s.skipped}</td></tr>`).join("")}</tbody></table></div>
+        ${lastSummary.unknown.length ? `<p class="small" style="margin:0">Skipped data this version doesn't know yet: ${esc(lastSummary.unknown.join(", "))}. Update the app and import again.</p>` : ""}` : ""}
+    </section>
+
+    <section class="card">
+      <h3>On this device</h3>
+      <div class="scroll"><table><tbody>${counts.map(([t, n]) => `<tr><td>${esc(LABELS[t] || t)}</td><td>${n}</td></tr>`).join("")}</tbody></table></div>
+      <button class="btn danger" type="button" id="erase">Erase all data on this device</button>
+    </section>`;
+
+  $("#dev", main).onchange = e => { const v = e.target.value.trim(); if (v) { db.setLocal("device_name", v); toast("Device name saved."); } else e.target.value = db.deviceName(); };
+  $("#export", main).onclick = () => doExport(ctx);
+  $("#imp", main).onchange = e => { const f = e.target.files[0]; e.target.value = ""; if (f) doImport(f, ctx); };
+  $("#erase", main).onclick = async () => {
+    if (!(await ask("Erase every team, player, match and stat on this device? Export a sync file first if Home Base doesn't have it yet.", "Erase", true))) return;
+    await db.eraseAll(); lastSummary = null; toast("This device is empty."); ctx.go("team");
+  };
+}
