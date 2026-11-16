@@ -86,6 +86,25 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li><b>Libero for a Middle:</b> when a Middle reaches position 1 (after rotating, or after you lose the serve) and the libero is on the bench, the app offers to bring the libero in.</li>
 </ul>`],
 
+["board", "Match-day board", `
+<p>Tap <b>Board</b> next to the score in the dark match bar (or More → <b>Board</b>) to see, at a glance, who is doing well and who is struggling today. Tap Board again to go back.</p>
+<ul>
+  <li>Switch between <b>Serve</b> (serve %), <b>Pass</b> (average 0–3) and <b>Attack</b> (hitting %), and between <b>this set</b> and the <b>whole match</b>.</li>
+  <li>One bar per player, <b>weakest at the top</b>. Red, amber and green follow the key under the list: pass under 1.5 / 1.5–2.0 / 2.0 and up; serve under 70% / 70–85% / 85% and up; hitting under .000 / .000–.150 / .150 and up.</li>
+  <li>The small number after each value is how many tries she's had, so you can tell one bad serve from a bad day. A green dot means she's on the court now.</li>
+</ul>`],
+
+["scout", "Scouting other teams", `
+<p>More → <b>Scout</b> lets you watch another match (or your opponent warming up) and rate their passers 0–3, so you know who to serve at. Scouting stays separate from your own players and stats.</p>
+<ol>
+  <li>Tap <b>+ New scouting match</b>. Type Team 1 and Team 2 (teams you've scouted before appear as you type, and come back with their numbers and notes). Add the date and location if you like.</li>
+  <li>Tap the numbers you see for Team 1 on the <b>0–99 grid</b>, then <b>Next</b>, then the same for Team 2.</li>
+  <li>Switch teams at the top. Tap a number, then <b>0</b>, <b>1</b>, <b>2</b> or <b>3</b> for her pass. <b>Undo last</b> removes your last rating. <b>+ #</b> adds a number you missed.</li>
+  <li><b>✎ Position &amp; notes</b> (after tapping a number) adds her position and a comment such as "hits line" or "tips a lot", before or during the match.</li>
+  <li><b>Report</b> shows each team's passers, weakest first, with position and comment. <b>Copy for email</b> copies it.</li>
+</ol>
+<p>From the Scout list, tap a scouted team to see every pass you've rated for them this season. Scouting syncs to Home Base (its <b>Scouting</b> page) and to other coaches like everything else. At the end of the season, <b>Clear old scouting</b> removes all of it.</p>`],
+
 ["work", "Work rotation", `
 <p>When your team works as officials (score keeper, libero tracker, scoreboard, line judges, swing helper), More → <b>Work</b> keeps the jobs fair.</p>
 <ol>
@@ -159,7 +178,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
 
 ["next", "Coming next", `
 <ul>
-  <li><b>Next ideas:</b> a match-day board (serve, pass and attack at a glance), scouting other teams' passers, the club logo, and finally an App Store version.</li>
+  <li><b>Last step:</b> a simple way to roll the app out to other coaches, and an App Store version.</li>
 </ul>`],
 ];
 

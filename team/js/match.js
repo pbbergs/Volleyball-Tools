@@ -88,6 +88,7 @@ export function renderBar(main, ctx) {
     <div class="mb-top">
       <div class="mb-name">${esc(label(m))}<div class="mb-sub">${esc(when(m))} · Set ${n}${res.w || res.l ? ` · Sets ${res.w}–${res.l}` : ""}${srv ? ` · ${srv === "us" ? "We serve" : "They serve"}` : ""}</div></div>
       ${pts ? `<div class="mb-score" aria-label="Score">${sc.us}–${sc.them}</div>` : ""}
+      <button class="btn small mb-board" type="button" id="to-board"${ctx.view === "board" ? " aria-current=\"true\"" : ""}>Board</button>
     </div>
     ${askFirst ? `<div class="mb-first"><span>Who serves first in set ${n}?</span>
         <button class="btn small" type="button" data-first="us">We do</button><button class="btn small" type="button" data-first="them">They do</button></div>` : ""}
@@ -108,6 +109,7 @@ export function renderBar(main, ctx) {
   }
   for (const b of main.querySelectorAll("[data-first]")) b.onclick = () => { court.setFirstServe(m, b.dataset.first); ctx.refresh(); };
   $("#to-court", main).onclick = () => ctx.go("court");
+  $("#to-board", main).onclick = () => ctx.go(ctx.view === "board" ? "serve" : "board");
   $("#set-menu", main).onclick = () => setMenu(m, ctx);
   return m;
 }

@@ -14,6 +14,8 @@ import * as more from "./tabs/more.js";
 import * as courtTab from "./tabs/court.js";
 import * as work from "./tabs/work.js";
 import * as links from "./tabs/links.js";
+import * as board from "./tabs/board.js";
+import * as scout from "./tabs/scout.js";
 
 // view name -> [render function, bottom tab it belongs to]
 const VIEWS = {
@@ -29,6 +31,8 @@ const VIEWS = {
   links:    [m => links.render(m, ctx), "more"],
   sync:     [m => syncTab.render(m, ctx), "more"],
   guide:    [m => guide.render(m, ctx), "more"],
+  board:    [m => board.render(m, ctx), "more"],
+  scout:    [m => scout.render(m, ctx), "more"],
 };
 
 let view = "serve";
@@ -65,7 +69,8 @@ for (const b of $$(".tabbar button")) b.addEventListener("click", () => ctx.go(b
 export const FILES = ["./", "./index.html", "./styles.css", "./icon.png", "./sw.js",
   "./js/app.js", "./js/db.js", "./js/schema.js", "./js/sync.js", "./js/ui.js", "./js/model.js", "./js/match.js", "./js/court.js",
   "./js/tabs/track.js", "./js/tabs/schedule.js", "./js/tabs/team.js", "./js/tabs/stats.js", "./js/tabs/sync.js",
-  "./js/tabs/more.js", "./js/tabs/guide.js", "./js/tabs/court.js", "./js/tabs/work.js", "./js/tabs/links.js"];
+  "./js/tabs/more.js", "./js/tabs/guide.js", "./js/tabs/court.js", "./js/tabs/work.js", "./js/tabs/links.js",
+  "./js/tabs/board.js", "./js/tabs/scout.js"];
 const hosted = /^https?:$/.test(location.protocol);
 async function serverVersion() {
   const [a, b] = await Promise.all([

@@ -225,3 +225,36 @@ table.matrix td.abs { color: var(--red); font-weight: 600; }
   .mb-score { font-size: 30px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Match-day board and scouting report: one bar per player, weakest first */
+.mb-board { flex: 0 0 auto; background: color-mix(in srgb, var(--head-ink) 12%, transparent); border-color: transparent; color: var(--head-ink); }
+.mb-board[aria-current] { background: var(--head-ink); color: var(--head); }
+.card-head .seg.seg-sm { flex: 0 0 auto; }
+.seg-sm button { min-height: 32px; padding: 5px 12px; font-size: 14px; }
+.bars { display: grid; gap: 2px; }
+.bar-row { display: grid; grid-template-columns: minmax(0, 9.5em) minmax(0, 1fr) 4.6em; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); }
+.bar-row:first-child { border-top: 0; }
+.bar-name { min-width: 0; line-height: 1.2; }
+.bar-name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-sub { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oncourt-dot { color: var(--green); font-size: 10px; margin-left: 4px; vertical-align: 2px; }
+.bar-track { height: 14px; border-radius: 7px; background: var(--press); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 7px; }
+.bar-fill.red, .key.red { background: var(--red); }
+.bar-fill.amber, .key.amber { background: var(--orange); }
+.bar-fill.green, .key.green { background: var(--green); }
+.bar-num { text-align: right; font-family: var(--font-display); font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bar-num.red { color: var(--red); } .bar-num.amber { color: var(--orange); } .bar-num.green { color: var(--green); }
+.bar-count { font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--muted); margin-left: 3px; vertical-align: 1px; }
+.key { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: 0; }
+@media (prefers-color-scheme: dark) { .bar-num.red { color: #f07a7a; } .bar-num.amber { color: #f0a65a; } .bar-num.green { color: #5fd08a; } }
+
+/* Scouting: 0-99 number grid */
+.numgrid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+.numgrid .ng { aspect-ratio: 1; max-width: 100%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px;
+  font-family: var(--font-display); font-weight: 700; font-size: 16px; padding: 0; cursor: pointer; min-height: 30px; }
+.numgrid .ng.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.scout-chips { grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); margin-top: 10px; }
+.scout-chips .pchip { flex-direction: column; align-items: center; gap: 0; padding: 8px 4px; text-align: center; }
+.scout-chips .pchip .nm { font-size: 12px; }
+.scout-chips .addnum { justify-content: center; color: var(--accent); border-style: dashed; font-weight: 700; }

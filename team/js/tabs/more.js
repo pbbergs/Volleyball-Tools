@@ -4,6 +4,8 @@ import { $$, esc } from "../ui.js";
 
 const ITEMS = [
   ["court", "Court", "Lineup, rotation, substitutions and the libero"],
+  ["board", "Board", "Match day: who's serving, passing and hitting well, weakest first"],
+  ["scout", "Scout", "Rate other teams' passers to find who to serve at"],
   ["team", "Team", "Teams, coaches, club players and this team's roster"],
   ["stats", "Stats", "Serve, pass, attack, block, set and playing time"],
   ["sync", "Sync", "Send data to Home Base, or bring in a file"],

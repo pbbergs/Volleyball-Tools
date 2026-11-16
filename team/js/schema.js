@@ -2,8 +2,8 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v2026.11.16c";
-export const SCHEMA_VERSION = 1;          // bump when a new table is added
+export const APP_VERSION = "v2026.11.16d";
+export const SCHEMA_VERSION = 2;          // bump when a new table is added
 export const SYNC_FORMAT = "vbteam-sync";
 export const SYNC_FORMAT_VERSION = 1;
 
@@ -22,7 +22,15 @@ export const TABLES = {
   work_log:  ["team_id", "match_id", "player_id", "duty_id", "status", "session", "date", "label", "slot"],
   links:     ["title", "url", "category", "sort"],
   settings:  ["key", "value"],
+  // Scouting other teams (kept apart from your own teams and stats)
+  scout_teams:   ["name", "notes"],
+  scout_players: ["scout_team_id", "number", "position", "comment"],
+  scout_matches: ["date", "team1_id", "team2_id", "location"],
+  scout_passes:  ["match_id", "scout_team_id", "scout_player_id", "rating", "tap"],
 };
+
+// Match-day board colours: below the first number is red, below the second amber, otherwise green.
+export const BOARD_CUTS = { pass: [1.5, 2.0], serve: [70, 85], hit: [0, 0.15] };
 
 export const POSITIONS = ["Setter", "Pin", "Middle", "Right Side", "Libero", "DS"];
 export const ROT_COUNTS = ["", "3", "6"];
