@@ -14,9 +14,12 @@ async function doExport(ctx) {
   const name = sync.exportFileName();
   const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
   const file = new File([blob], name, { type: "application/json" });
+  // Phones and tablets get the Share sheet (Mail, Outlook, Save to Files); computers save to Downloads.
+  const ua = navigator.userAgent;
+  const mobile = /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
   let shared = false;
   try {
-    if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: name }); shared = true; }
+    if (mobile && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: name }); shared = true; }
   } catch (e) { if (e?.name === "AbortError") return; }
   if (!shared) {
     const url = URL.createObjectURL(blob);
@@ -51,7 +54,7 @@ export function render(main, ctx) {
 
     <section class="card">
       <h3>Send data to Home Base</h3>
-      <p class="small" style="margin:0">Creates one file with everything on this phone. Send it to yourself (Mail, Outlook, or Save to Files → OneDrive), then import it in Home Base on the PC.</p>
+      <p class="small" style="margin:0">Creates one file with everything on this phone. On an iPhone, send it to yourself (Mail, Outlook, or Save to Files → OneDrive). On a computer it goes to your Downloads folder. Then import it in Home Base.</p>
       <button class="btn primary" type="button" id="export">Export sync file</button>
       <p class="muted small" style="margin:0">Last export: ${esc(when(db.getLocal("last_export")))}</p>
     </section>
