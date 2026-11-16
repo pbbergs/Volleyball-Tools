@@ -8,9 +8,11 @@ const SECTIONS = [
 <ul>
   <li><b>Serve:</b> Ace, In, Out for each serve.</li>
   <li><b>Receive:</b> rate each pass 0, 1, 2 or 3 (3 = perfect, 2 = good, 1 = poor but playable, 0 = shanked, overpassed or aced).</li>
+  <li><b>Attack:</b> Kill, In play, Error; <b>Block:</b> Solo, Assist, Error; <b>Set:</b> Assist, Error.</li>
+  <li><b>Court:</b> the lineup by position, rotation, substitutions and the libero rules; it also counts each player's playing time.</li>
   <li><b>Schedule:</b> every match of the year with day, date, opponent, location and optional time.</li>
   <li><b>Team:</b> teams, coaches, the club's players and each team's roster.</li>
-  <li><b>Stats:</b> by match, by set or for the season.</li>
+  <li><b>Stats:</b> by match, by set or for the season, including playing time.</li>
   <li><b>Sync:</b> send data to Home Base and bring in data from it or from other coaches.</li>
 </ul>`],
 
@@ -29,7 +31,9 @@ const SECTIONS = [
   <li><b>Create your team</b> on More → Team: team name and season.</li>
   <li><b>Coaches:</b> fill in the head coach and up to three assistant coaches on the same page.</li>
   <li><b>Players:</b> tap <b>+ New player</b>, or <b>Import CSV…</b> to load a whole list (see the next section). New players are added to the club list and to the team you're working with.</li>
-  <li><b>Roster:</b> players already in the club list can be added with <b>+ Add from club list</b>. Tap a roster player to change her number or position on this team, or to remove her from the team.</li>
+  <li><b>Roster:</b> players already in the club list can be added with <b>+ Add from club list</b>. Tap a roster player to change her number, position or <b>rotation count</b> on this team, or to remove her from the team. Set the libero's position to <b>Libero</b> so the court rules know her.</li>
+  <li><b>Attack:</b> Kill, In play, Error; <b>Block:</b> Solo, Assist, Error; <b>Set:</b> Assist, Error.</li>
+  <li><b>Court:</b> the lineup by position, rotation, substitutions and the libero rules; it also counts each player's playing time.</li>
   <li><b>Schedule:</b> on the Schedule tab, tap <b>+ Add match</b> for each match: date, optional time, opponent, location, and an optional event or tournament name. The day of the week is filled in for you.</li>
 </ol>
 <p>Setting up a second team? Tap <b>+ New team</b> on the Team page. When there's more than one team, a <b>Working with</b> menu picks which one the other tabs show.</p>
@@ -55,24 +59,41 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li>On <b>Schedule</b>, tap the match and choose <b>Track this match</b>.</li>
   <li>The first time, choose how to keep score:
     <ul>
-      <li><b>Every point:</b> tap <b>Point us</b> or <b>Point them</b> after each rally. An <b>Ace</b> scores the point for you and an <b>Out</b> scores it for them automatically, so don't tap a point button for those. You get a running score, and set scores fill in by themselves.</li>
+      <li><b>Every point:</b> tap <b>Point us</b> or <b>Point them</b> after each rally. Some taps score the rally for you, so don't also tap a point button for them: an <b>Ace</b>, <b>Kill</b> or <b>Solo block</b> scores for you; a serve <b>Out</b>, attack <b>Error</b>, block <b>Error</b> or set <b>Error</b> scores for them. (For a block <b>Assist</b>, tap Point us once.) You get a running score, set scores fill in by themselves, and side outs are counted.</li>
       <li><b>Final set scores only:</b> no point buttons; type each set's score when it ends.</li>
     </ul></li>
-  <li><b>Serve tab:</b> tap the server, then <b>Ace</b>, <b>In</b> or <b>Out</b>. The server stays picked until you tap someone else.</li>
-  <li><b>Receive tab:</b> tap the passer, then <b>0</b>–<b>3</b>.</li>
-  <li><b>Undo last</b> removes the last tap you made on this phone in this match, including a point it scored.</li>
-  <li><b>Set ▾</b> (in the dark match bar) finishes a set: check or type its score and start the next set, or end the match. You can also go back a set if you moved on too soon.</li>
+  <li>In a point-by-point match, answer <b>Who serves first?</b> at the start of each set.</li>
+  <li><b>Court</b> (button in the dark match bar, or More → Court): tap a bench player, then a court position, for each of the starting six. See the next section.</li>
+  <li><b>Serve tab:</b> the player at position 1 is picked for you when the court is set; otherwise tap the server. Then <b>Ace</b>, <b>In</b> or <b>Out</b>.</li>
+  <li><b>Receive tab:</b> tap the passer (players on the court are listed first), then <b>0</b>–<b>3</b>.</li>
+  <li><b>Attack tab:</b> choose <b>Attack</b>, <b>Block</b> or <b>Set</b> at the top, tap the player, then the result.</li>
+  <li><b>Undo last</b> removes the last tap you made on this phone in this match, including a point it scored and a rotation it caused.</li>
+  <li><b>Set ▾</b> finishes a set: check or type its score and start the next set, or end the match. Each new set starts with an empty court.</li>
 </ol>
-<p>The match bar stays at the top of Serve, Receive and Attack, so you can switch tabs between rallies. To fix scores later, open the match on Schedule and tap <b>Set scores</b>. An ended match can be reopened.</p>
-<p><b>Two coaches at one match</b> can both track (for example one on Serve, one on Receive). Each phone's taps are kept separately and combined in Home Base. Only one of you should tap the point buttons.</p>`],
+<p>The match bar stays at the top of Serve, Receive, Attack and Court, so you can switch between them during play. To fix scores later, open the match on Schedule and tap <b>Set scores</b>. An ended match can be reopened.</p>
+<p><b>Two coaches at one match</b> can both track (for example one on Serve and Receive, one on Attack). Only one of you should run the Court and tap the point buttons.</p>`],
+
+["court", "The Court tab", `
+<ul>
+  <li><b>Lineup:</b> tap a bench player, then a position. If someone was there she goes to the bench; that's a substitution (filling an empty spot isn't). Tap a player on the court to select her, then <b>Take off court</b>.</li>
+  <li><b>Roles:</b> each position carries a role that moves with it: 1 Setter 1, 2 Pin 1, 3 Middle 1, 4 Opposite 1, 5 Pin 2, 6 Middle 2. Setter 1 shows as Opposite 2 in the front row, and Opposite 1 as Setter 2 in the back row. A libero always shows as Libero.</li>
+  <li><b>Rotate</b> moves everyone clockwise (4→3, 3→2, 2→1, 1→6, 6→5, 5→4). In point-by-point matches the court rotates by itself when you win a rally on their serve (a side out). Turn that off with <b>Rotate on side outs</b>.</li>
+  <li><b>Undo lineup change</b> steps back through lineup changes, restoring the substitution count too. It never removes recorded stats.</li>
+  <li><b>Substitutions:</b> 15 per set, shown at the top. Changes involving the libero don't count. After 15, counted substitutions are blocked.</li>
+  <li><b>Libero in the front row:</b> a red notice appears and Rotate is off until you bring someone in for her: just tap a bench player.</li>
+  <li><b>Rotation count 3:</b> when a player set to 3 crosses between the back and front rows, the app asks whether to substitute. Tap a bench player, or <b>Keep anyway</b>.</li>
+  <li><b>Libero for a Middle:</b> when a Middle reaches position 1 (after rotating, or after you lose the serve) and the libero is on the bench, the app offers to bring the libero in.</li>
+</ul>`],
 
 ["stats", "Stats", `
-<p>More → Stats shows each player's serves, aces, in, out, serve %, passes and average pass for the season, one match, or one set.</p>
+<p>More → Stats shows each player for the season, one match, or one set. Switch views at the top:</p>
 <ul>
-  <li><b>Serve %</b> = aces plus in serves, out of all serves.</li>
-  <li><b>Avg pass</b> = the average 0–3 rating.</li>
-  <li>A cell is shaded when a player has more than 3 serves and over half went out, or more than 3 passes averaging under 1.</li>
-</ul>`],
+  <li><b>Serve &amp; pass:</b> serves, aces, in, out, serve % (aces plus in, out of all serves), passes and average pass. Shaded: more than 3 serves and over half out, or more than 3 passes averaging under 1. Point-by-point matches also show the team's side-out %.</li>
+  <li><b>Attack:</b> kills, errors, attempts, and hitting % = (kills − errors) ÷ attempts.</li>
+  <li><b>Block &amp; set:</b> solo blocks, block assists, total blocks (solo + half of each assist), block errors, set assists and set errors.</li>
+  <li><b>Playing time:</b> sets, rotations and rallies on the court for each player, and her share of all rallies. Players well below the team's middle player are shaded. This is your record if a parent asks about playing time; it's counted from the Court tab, so keep the lineup current during matches.</li>
+</ul>
+<p><b>Copy for email</b> copies the table you're looking at; paste it into an email. <b>Export to Excel</b> saves every recorded tap as a CSV file.</p>`],
 
 ["sync", "Syncing with Home Base and other coaches", `
 <p>Every phone keeps its own copy of the data. Sync files move data between phones and the PC. Each record has its own ID, so merging never loses anything:</p>
@@ -99,7 +120,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li>Install Python 3 from python.org. On the first installer screen, tick <b>Add python.exe to PATH</b>.</li>
   <li>Put the <code>vb-home-base</code> folder somewhere permanent, such as Documents.</li>
   <li>Double-click <code>start-home-base.bat</code>. Leave the black window open; your browser opens Home Base at <code>http://localhost:8770</code>.</li>
-  <li>The Dashboard imports files, downloads setup files, and lists recent imports. Reports show season stats, match results and the schedule.</li>
+  <li>The Dashboard imports files, downloads setup files, and lists recent imports. Reports show season stats (serve, pass, attack, block, set), playing time, match results and the schedule.</li>
 </ol>
 <p>The master database is <code>volleyball.db</code> in that folder: a normal SQLite file you can open with DB Browser for SQLite. Home Base keeps a copy of every imported file in <code>imports</code> and a daily backup of the database in <code>backups</code>.</p>`],
 
@@ -112,6 +133,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
 
 ["trouble", "Troubleshooting", `
 <ul>
+  <li><b>The Serve tab picks the wrong server:</b> the court is out of step. Fix it on the Court tab (Rotate or Undo lineup change).</li>
   <li><b>No players show on Serve or Receive:</b> add players to this match's team on More → Team.</li>
   <li><b>"No match selected":</b> tap the match on Schedule, then <b>Track this match</b>.</li>
   <li><b>The roster or schedule disappeared:</b> the app was opened a different way (Safari instead of the Home Screen icon) or on another phone. Use the same icon, or import a setup file.</li>
@@ -122,7 +144,6 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
 
 ["next", "Coming next", `
 <ul>
-  <li><b>Phase 2:</b> Court tab (lineup, rotation, substitutions, libero rules), playing time report, Attack / Block / Set tracking, more stats and Excel export.</li>
   <li><b>Phase 3:</b> Work rotation for officiating duties, Helpful links, more Home Base reports.</li>
 </ul>`],
 ];

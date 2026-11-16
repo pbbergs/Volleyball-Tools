@@ -127,6 +127,47 @@ th:first-child, td:first-child { text-align: left; padding-left: 12px; }
 tr.team td { font-weight: 700; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 td.flag { background: var(--flag); }
 
+/* Match bar extras */
+.mb-btns { grid-template-columns: 1fr 1fr auto auto; }
+.mb-first { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; }
+.mb-first span { flex: 1 1 100%; }
+.mb-first .btn { background: var(--head-ink); color: var(--head); border-color: transparent; flex: 1; }
+
+/* Segmented switcher (Attack / Block / Set, Stats views) */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; background: var(--press); border-radius: 12px; min-width: 0; }
+@media (max-width: 560px) { .seg.wrap { grid-auto-flow: row; grid-template-columns: 1fr 1fr; } }
+.card-head .seg { flex: 1 1 100%; }
+.seg button { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 0; background: none; padding: 9px 8px; border-radius: 9px; font-weight: 700; cursor: pointer; color: var(--muted); min-height: 40px; }
+.seg button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+
+.chip-sep { grid-column: 1 / -1; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-top: 4px; }
+.pchip.oncourt { border-color: color-mix(in srgb, var(--green) 55%, var(--line)); }
+.pchip.oncourt.sel { border-color: var(--accent); }
+
+/* Court */
+.subs { font-weight: 700; font-size: 14px; padding: 4px 10px; border-radius: 99px; background: var(--press); }
+.subs.maxed { background: var(--flag); color: var(--red); }
+.notice { background: var(--flag); border: 2px solid var(--red); border-radius: 12px; padding: 12px; font-size: 15px; }
+.net { height: 22px; border-radius: 4px 4px 0 0; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: .3em; display: flex; align-items: center; justify-content: center;
+       background: repeating-linear-gradient(45deg, #222 0 3px, #555 3px 6px), #333; background-blend-mode: normal; }
+.court { display: grid; grid-template-columns: repeat(3, 1fr); background: #f1e3c0; border: 4px solid var(--ink); border-top-width: 6px; margin-top: -12px; position: relative; }
+@media (prefers-color-scheme: dark) { .court { background: #2a2820; } }
+.court::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 4px dotted var(--ink); pointer-events: none; }
+.cbox { position: relative; min-height: 104px; border: 0; border-right: 2px solid var(--ink); background: none; color: var(--ink); cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 22px 4px 8px; min-width: 0; }
+.cbox:nth-child(3n) { border-right: 0; }
+.cbox.sel { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.cbox.warn { outline: 3px solid var(--red); outline-offset: -3px; }
+.cbox.serving .cnum::after { content: " ●"; color: var(--green); font-size: 16px; vertical-align: middle; }
+.cpos { position: absolute; top: 4px; left: 7px; font-family: var(--font-display); font-weight: 700; font-size: 20px; opacity: .55; }
+.cnum { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1; }
+.cname { font-weight: 600; font-size: 14px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crole { font-weight: 700; font-size: 12px; color: var(--muted); text-align: center; }
+.cempty { color: var(--muted); font-weight: 600; font-size: 14px; }
+.cbtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.cbtns .btn { color: #fff; border: 0; font-size: 15px; padding: 10px 6px; }
+.cbtns .o1 { background: #c2410c; } .cbtns .o2 { background: #e2570b; } .cbtns .o3 { background: #f97316; }
+
 /* Pop-up sheets */
 .sheet { position: fixed; inset: 0; z-index: 50; background: rgb(5 10 16 / .6); display: flex; align-items: flex-end; justify-content: center;
          padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }

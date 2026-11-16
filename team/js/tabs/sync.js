@@ -2,7 +2,7 @@
 
 import * as db from "../db.js";
 import * as sync from "../sync.js";
-import { $, esc, sheet, ask, say, toast } from "../ui.js";
+import { $, esc, sheet, ask, say, toast, saveFile } from "../ui.js";
 
 const when = iso => (iso ? new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "never");
 const LABELS = { teams: "Teams", staff: "Coaches", players: "Players", roster: "Roster entries", matches: "Matches", sets: "Set scores",
@@ -12,21 +12,7 @@ let lastSummary = null;
 async function doExport(ctx) {
   const data = sync.buildExport();
   const name = sync.exportFileName();
-  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-  const file = new File([blob], name, { type: "application/json" });
-  // Phones and tablets get the Share sheet (Mail, Outlook, Save to Files); computers save to Downloads.
-  const ua = navigator.userAgent;
-  const mobile = /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  let shared = false;
-  try {
-    if (mobile && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: name }); shared = true; }
-  } catch (e) { if (e?.name === "AbortError") return; }
-  if (!shared) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  }
+  if (!(await saveFile(name, JSON.stringify(data), "application/json"))) return;
   await db.setLocal("last_export", db.now());
   toast("Sync file ready.");
   ctx.refresh();

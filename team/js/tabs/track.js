@@ -1,34 +1,47 @@
-// Serve and Receive tracking tabs (Attack, Block and Set arrive in Phase 2).
+// Serve, Receive and Attack / Block / Set tracking tabs.
 
 import * as db from "../db.js";
 import * as model from "../model.js";
-import { renderBar } from "../match.js";
+import * as court from "../court.js";
+import { renderBar, chooseScoring } from "../match.js";
 import { $, $$, esc, toast } from "../ui.js";
 
 const BUTTONS = {
   serve:   [["ace", "Ace", "g"], ["in", "In", "b"], ["out", "Out", "o"]],
   receive: [["0", "0", "r"], ["1", "1", "o"], ["2", "2", "b"], ["3", "3", "g"]],
+  attack:  [["kill", "Kill", "g"], ["in play", "In play", "b"], ["error", "Error", "r"]],
+  block:   [["solo", "Solo", "g"], ["assist", "Assist", "b"], ["error", "Error", "r"]],
+  set:     [["assist", "Assist", "g"], ["error", "Error", "r"]],
 };
-const RESULT_TEXT = { ace: "Ace", in: "In", out: "Out" };
+const TITLE = { serve: "Serve", receive: "Serve receive", attack: "Attack", block: "Block", set: "Set" };
+function words(skill, r) {
+  r = String(r).toLowerCase();
+  if (skill === "receive") return `Pass ${r}`;
+  if (skill === "serve") return r === "ace" ? "Ace" : r === "in" ? "Serve in" : "Serve out";
+  return `${TITLE[skill]} ${r}`;
+}
 let lastMsg = "";
+let atkSkill = "attack";
 
-function summary(mode, m, pid) {
+function summary(skill, m, pid) {
   if (!pid) return "Tap a player, then a result.";
   const s = model.tally(model.actionsFor(m.id, a => a.player_id === pid));
-  if (mode === "serve")
-    return s.serves ? `This match: ${s.serves} serve${s.serves > 1 ? "s" : ""} · ${s.ace} ace${s.ace === 1 ? "" : "s"} · ${s.out} out · ${s.srvPct}% in` : "No serves yet this match.";
-  return s.passes ? `This match: ${s.passes} pass${s.passes > 1 ? "es" : ""} · avg ${s.avg}` : "No passes yet this match.";
+  switch (skill) {
+    case "serve": return s.serves ? `This match: ${s.serves} serve${s.serves > 1 ? "s" : ""} · ${s.ace} ace${s.ace === 1 ? "" : "s"} · ${s.out} out · ${s.srvPct}% in` : "No serves yet this match.";
+    case "receive": return s.passes ? `This match: ${s.passes} pass${s.passes > 1 ? "es" : ""} · avg ${s.avg}` : "No passes yet this match.";
+    case "attack": return s.ta ? `This match: ${s.kill} kill${s.kill === 1 ? "" : "s"} · ${s.atkErr} error${s.atkErr === 1 ? "" : "s"} · ${s.ta} attempts · hitting ${s.hitPct}` : "No attacks yet this match.";
+    case "block": return s.solo + s.blkAst + s.blkErr ? `This match: ${s.solo} solo · ${s.blkAst} assist · ${s.blkErr} error` : "No blocks yet this match.";
+    default: return s.setAst + s.setErr ? `This match: ${s.setAst} assist${s.setAst === 1 ? "" : "s"} · ${s.setErr} error${s.setErr === 1 ? "" : "s"}` : "No sets recorded yet this match.";
+  }
 }
 
-export function render(main, ctx, mode) {
-  const m = renderBar(main, ctx);
-  if (!m) return;
-  if (!m.scoring) {
-    main.insertAdjacentHTML("beforeend", `<section class="card"><p>Choose how to score this match before you start.</p>
-      <button class="btn primary" type="button" id="choose">Choose scoring</button></section>`);
-    $("#choose", main).onclick = async () => { const { chooseScoring } = await import("../match.js"); if (await chooseScoring(m)) ctx.refresh(); };
-    return;
-  }
+// Players on the court first (in court order 1-6), then the bench by number.
+function ordered(m, entries) {
+  const s = court.state(m), pos = Object.fromEntries(Object.entries(s.lineup).filter(([, v]) => v).map(([k, v]) => [v, +k]));
+  return { s, list: [...entries].sort((a, b) => (pos[a.p.id] || 99) - (pos[b.p.id] || 99)), pos };
+}
+
+function trackCard(main, ctx, m, skill, heading) {
   const entries = model.rosterFor(m.team_id);
   if (!entries.length) {
     main.insertAdjacentHTML("beforeend", `<section class="card"><h2>No players on this team</h2>
@@ -37,53 +50,80 @@ export function render(main, ctx, mode) {
     $("#to-team", main).onclick = () => ctx.go("team");
     return;
   }
-  const key = `sel_${mode}`;
-  let sel = db.getLocal(key);
-  if (!entries.some(e => e.p.id === sel)) sel = null;
+  const { s, list, pos } = ordered(m, entries);
   const names = model.shortNames(entries);
+  const key = `sel_${skill}`;
+  let sel = db.getLocal(key);
+  let note = "";
+  if (skill === "serve" && s.lineup[1]) {
+    const srv = m.scoring === "points" ? court.serving(m, s) : null;
+    if (srv === "them") note = "They're serving. Track the pass on Receive.";
+    else { sel = s.lineup[1]; note = "Server at position 1 is picked for you."; }
+  }
+  if (!entries.some(e => e.p.id === sel)) sel = null;
+  const hasCourt = Object.keys(pos).length > 0;
 
   main.insertAdjacentHTML("beforeend", `<section class="card">
-      <div class="card-head"><h2>${mode === "serve" ? "Serve" : "Serve receive"}</h2><span class="grow"></span>
-        <span class="muted small">${mode === "serve" ? "Pick the server" : "Pick the passer"}</span></div>
-      <div class="chips">${entries.map(({ r, p }) => `<button type="button" class="pchip${p.id === sel ? " sel" : ""}" data-p="${esc(p.id)}">
+      <div class="card-head">${heading}<span class="grow"></span>
+        <span class="muted small">${note || (skill === "serve" ? "Pick the server" : "Pick the player")}</span></div>
+      <div class="chips">${list.map(({ r, p }, i) => `${hasCourt && i === Object.keys(pos).length ? `<div class="chip-sep">Bench</div>` : ""}
+        <button type="button" class="pchip${p.id === sel ? " sel" : ""}${pos[p.id] ? " oncourt" : ""}" data-p="${esc(p.id)}">
           <span class="n">${esc(r.number ?? "")}</span><span class="nm">${esc(names[p.id])}</span></button>`).join("")}</div>
     </section>
     <section class="card">
-      <div class="results">${BUTTONS[mode].map(([v, l, c]) => `<button type="button" class="res ${c}" data-r="${esc(v)}">${esc(l)}</button>`).join("")}</div>
+      <div class="results">${BUTTONS[skill].map(([v, l, c]) => `<button type="button" class="res ${c}" data-r="${esc(v)}">${esc(l)}</button>`).join("")}</div>
       <div class="feedback"><span class="msg" id="fb">${esc(lastMsg)}</span>
         <button type="button" class="btn small" id="undo">↶ Undo last</button></div>
-      <p class="muted small" id="sum">${esc(summary(mode, m, sel))}</p>
+      <p class="muted small" id="sum">${esc(summary(skill, m, sel))}</p>
     </section>`);
 
   for (const b of $$("[data-p]", main)) b.onclick = () => {
     sel = b.dataset.p; db.setLocal(key, sel);
     for (const x of $$("[data-p]", main)) x.classList.toggle("sel", x === b);
-    $("#sum", main).textContent = summary(mode, m, sel);
+    $("#sum", main).textContent = summary(skill, m, sel);
   };
   for (const b of $$("[data-r]", main)) b.onclick = () => {
     if (!sel) { toast("Tap a player first."); return; }
-    const p = entries.find(e => e.p.id === sel);
-    const r = model.record(db.get("matches", m.id), sel, mode, b.dataset.r);
-    const what = mode === "serve" ? RESULT_TEXT[b.dataset.r] : `Pass ${b.dataset.r}`;
-    lastMsg = `${what} · #${p.r.number ?? ""} ${names[sel]}${r.point ? ` · Point ${r.point} ${r.score.us}–${r.score.them}` : ""}`;
+    const e = entries.find(x => x.p.id === sel);
+    const r = court.record(db.get("matches", m.id), sel, skill, b.dataset.r);
+    lastMsg = `${words(skill, b.dataset.r)} · #${e.r.number ?? ""} ${names[sel]}` +
+      (r.point ? ` · Point ${r.point} ${r.score.us}–${r.score.them}` : "") + (r.rotated ? " · Side out, rotated" : "");
     try { navigator.vibrate?.(30); } catch {}
     ctx.refresh();
     $("#fb")?.classList.add("pop");
   };
   $("#undo", main).onclick = () => {
-    const rows = model.undoLast(m);
+    const rows = court.undo(db.get("matches", m.id));
     if (!rows) { toast("Nothing to undo in this match."); return; }
     const a = rows.find(x => x.skill !== "point") || rows[0];
     const who = a.player_id ? names[a.player_id] || "" : "";
-    lastMsg = `Undid ${a.skill === "point" ? `point ${a.result}` : `${a.skill === "serve" ? RESULT_TEXT[a.result] : "pass " + a.result}`}${who ? " · " + who : ""}`;
+    lastMsg = `Undid ${a.skill === "point" ? `point ${a.result}` : words(a.skill, a.result)}${who ? " · " + who : ""}`;
     ctx.refresh();
   };
 }
 
-export function renderAttack(main, ctx) {
+function ready(main, ctx) {
   const m = renderBar(main, ctx);
-  main.insertAdjacentHTML("beforeend", `<section class="card"><h2>Attack, Block, Set</h2>
-    <p>Tracking for attacks (Kill, In play, Error), blocks (Solo, Assist, Error) and set assists (Assist, Error) arrives in Phase 2.</p>
-    <p class="muted small">It will appear here automatically: tap Update when the bar shows up at the bottom of the screen.</p></section>`);
+  if (!m) return null;
+  if (!m.scoring) {
+    main.insertAdjacentHTML("beforeend", `<section class="card"><p>Choose how to score this match before you start.</p>
+      <button class="btn primary" type="button" id="choose">Choose scoring</button></section>`);
+    $("#choose", main).onclick = async () => { if (await chooseScoring(m)) ctx.refresh(); };
+    return null;
+  }
   return m;
+}
+
+export function render(main, ctx, mode) {
+  const m = ready(main, ctx);
+  if (m) trackCard(main, ctx, m, mode, `<h2>${TITLE[mode]}</h2>`);
+}
+
+export function renderAttack(main, ctx) {
+  const m = ready(main, ctx);
+  if (!m) return;
+  const seg = `<div class="seg" role="tablist">${["attack", "block", "set"].map(k =>
+    `<button type="button" role="tab" data-seg="${k}" aria-selected="${k === atkSkill}">${TITLE[k]}</button>`).join("")}</div>`;
+  trackCard(main, ctx, m, atkSkill, seg);
+  for (const b of $$("[data-seg]", main)) b.onclick = () => { atkSkill = b.dataset.seg; lastMsg = ""; ctx.refresh(); };
 }

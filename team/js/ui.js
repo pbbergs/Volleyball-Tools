@@ -51,6 +51,43 @@ export async function ask(message, yes = "Yes", danger = false) {
 }
 export const say = message => sheet({ body: `<p class="sheet-msg">${esc(message)}</p>` });
 
+// Give the viewer a file: the Share sheet on phones and tablets, the Downloads folder on computers.
+// Returns false if the viewer cancelled.
+export async function saveFile(name, text, type) {
+  const blob = new Blob([text], { type });
+  const ua = navigator.userAgent;
+  const mobile = /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  try {
+    const file = new File([blob], name, { type });
+    if (mobile && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: name }); return true; }
+  } catch (e) { if (e?.name === "AbortError") return false; }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  return true;
+}
+
+// Copy a table to the clipboard as HTML (pastes into email as a table) with a plain-text fallback.
+export async function copyTable(html, text) {
+  try {
+    if (window.ClipboardItem && navigator.clipboard?.write) {
+      await navigator.clipboard.write([new ClipboardItem({ "text/html": new Blob([html], { type: "text/html" }), "text/plain": new Blob([text], { type: "text/plain" }) })]);
+      return true;
+    }
+  } catch {}
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  try {
+    const box = document.createElement("div"); box.contentEditable = "true"; box.innerHTML = html;
+    box.style.cssText = "position:fixed;left:-9999px;top:0";
+    document.body.appendChild(box);
+    const r = document.createRange(); r.selectNodeContents(box);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    const ok = document.execCommand("copy"); sel.removeAllRanges(); box.remove();
+    return ok;
+  } catch { return false; }
+}
+
 // ---------- formatting ----------
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 export const parseDate = s => (s ? new Date(s + "T12:00:00") : null);

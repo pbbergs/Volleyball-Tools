@@ -11,6 +11,7 @@ import * as stats from "./tabs/stats.js";
 import * as syncTab from "./tabs/sync.js";
 import * as guide from "./tabs/guide.js";
 import * as more from "./tabs/more.js";
+import * as courtTab from "./tabs/court.js";
 
 // view name -> [render function, bottom tab it belongs to]
 const VIEWS = {
@@ -19,6 +20,7 @@ const VIEWS = {
   attack:   [m => track.renderAttack(m, ctx), "attack"],
   schedule: [m => schedule.render(m, ctx), "schedule"],
   more:     [m => more.render(m, ctx), "more"],
+  court:    [m => courtTab.render(m, ctx), "more"],
   team:     [m => team.render(m, ctx), "more"],
   stats:    [m => stats.render(m, ctx), "more"],
   sync:     [m => syncTab.render(m, ctx), "more"],
@@ -52,17 +54,37 @@ function route() {
 for (const b of $$(".tabbar button")) b.addEventListener("click", () => ctx.go(b.dataset.tab));
 
 // ---------- update check (when served from a web address) ----------
+// The bar appears only when the new version is fully published (page and code agree).
+// Update fetches a fresh copy of every file before reloading, so nothing old is left behind.
+export const FILES = ["./", "./index.html", "./styles.css", "./icon.png", "./sw.js",
+  "./js/app.js", "./js/db.js", "./js/schema.js", "./js/sync.js", "./js/ui.js", "./js/model.js", "./js/match.js", "./js/court.js",
+  "./js/tabs/track.js", "./js/tabs/schedule.js", "./js/tabs/team.js", "./js/tabs/stats.js", "./js/tabs/sync.js",
+  "./js/tabs/more.js", "./js/tabs/guide.js", "./js/tabs/court.js"];
 const hosted = /^https?:$/.test(location.protocol);
+async function serverVersion() {
+  const [a, b] = await Promise.all([
+    fetch("./index.html", { cache: "reload" }).then(r => (r.ok ? r.text() : "")),
+    fetch("./js/schema.js", { cache: "reload" }).then(r => (r.ok ? r.text() : "")),
+  ]);
+  const v1 = a.match(/id="ver">(v[\w.]+)</)?.[1], v2 = b.match(/APP_VERSION = "(v[\w.]+)"/)?.[1];
+  return v1 && v1 === v2 ? v1 : null;
+}
 async function checkForUpdate() {
   if (!hosted || document.visibilityState !== "visible") return;
   try {
-    const res = await fetch("./index.html", { cache: "reload" });
-    if (!res.ok) return;
-    const m = (await res.text()).match(/id="ver">(v[\w.]+)</);
-    if (m && m[1] !== APP_VERSION) { $("#update-text").textContent = `New version available (${m[1]})`; $("#update").hidden = false; }
+    const v = await serverVersion();
+    if (v && v !== APP_VERSION) { $("#update-text").textContent = `New version available (${v})`; $("#update").hidden = false; }
   } catch {}
 }
-$("#update-btn").addEventListener("click", () => location.reload());
+$("#update-btn").addEventListener("click", async () => {
+  const btn = $("#update-btn"); btn.disabled = true; btn.textContent = "Updating…";
+  try {
+    await Promise.all(FILES.map(f => fetch(f, { cache: "reload" }).catch(() => {})));
+    if (window.caches) for (const k of await caches.keys()) if (k.startsWith("vbteam-")) await caches.delete(k);
+    const reg = await navigator.serviceWorker?.getRegistration?.(); await reg?.update?.();
+  } catch {}
+  location.reload();
+});
 
 // ---------- start ----------
 async function boot() {

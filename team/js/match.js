@@ -2,6 +2,7 @@
 
 import * as db from "./db.js";
 import * as model from "./model.js";
+import * as court from "./court.js";
 import { $, esc, sheet, toast, fmtDate, dayName } from "./ui.js";
 
 // Ask how to score a match. Saved on the match so every device uses the same choice.
@@ -81,21 +82,32 @@ export function renderBar(main, ctx) {
   }
   const n = model.curSet(m), res = model.matchResult(m.id), pts = m.scoring === "points";
   const sc = pts ? model.liveScore(m.id, n) : null;
+  const cs = court.state(m), srv = pts ? court.serving(m, cs) : null;
+  const askFirst = pts && !srv;
   main.insertAdjacentHTML("beforeend", `<section class="matchbar" aria-label="Current match">
     <div class="mb-top">
-      <div class="mb-name">${esc(label(m))}<div class="mb-sub">${esc(when(m))} · Set ${n}${res.w || res.l ? ` · Sets ${res.w}–${res.l}` : ""}</div></div>
+      <div class="mb-name">${esc(label(m))}<div class="mb-sub">${esc(when(m))} · Set ${n}${res.w || res.l ? ` · Sets ${res.w}–${res.l}` : ""}${srv ? ` · ${srv === "us" ? "We serve" : "They serve"}` : ""}</div></div>
       ${pts ? `<div class="mb-score" aria-label="Score">${sc.us}–${sc.them}</div>` : ""}
     </div>
+    ${askFirst ? `<div class="mb-first"><span>Who serves first in set ${n}?</span>
+        <button class="btn small" type="button" data-first="us">We do</button><button class="btn small" type="button" data-first="them">They do</button></div>` : ""}
     <div class="mb-btns">
       ${pts ? `<button class="btn us" type="button" id="pt-us">Point us</button><button class="btn them" type="button" id="pt-them">Point them</button>`
             : `<span class="mb-sub" style="grid-column: span 2; align-self:center">Final set scores only</span>`}
+      <button class="btn" type="button" id="to-court">Court</button>
       <button class="btn" type="button" id="set-menu">Set ${n} ▾</button>
     </div></section>`);
   if (pts) {
-    const pt = who => { const r = model.record(m, null, "point", who); toast(`Point ${who} · ${r.score.us}–${r.score.them}`); ctx.refresh(); };
+    const pt = who => {
+      const r = court.record(m, null, "point", who);
+      toast(`Point ${who} · ${r.score.us}–${r.score.them}${r.rotated ? " · Side out, rotated" : ""}`);
+      ctx.refresh();
+    };
     $("#pt-us", main).onclick = () => pt("us");
     $("#pt-them", main).onclick = () => pt("them");
   }
+  for (const b of main.querySelectorAll("[data-first]")) b.onclick = () => { court.setFirstServe(m, b.dataset.first); ctx.refresh(); };
+  $("#to-court", main).onclick = () => ctx.go("court");
   $("#set-menu", main).onclick = () => setMenu(m, ctx);
   return m;
 }

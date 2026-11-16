@@ -3,11 +3,11 @@
 import { $$, esc } from "../ui.js";
 
 const ITEMS = [
+  ["court", "Court", "Lineup, rotation, substitutions and the libero"],
   ["team", "Team", "Teams, coaches, club players and this team's roster"],
-  ["stats", "Stats", "Serve and receive stats by match, set or season"],
+  ["stats", "Stats", "Serve, pass, attack, block, set and playing time"],
   ["sync", "Sync", "Send data to Home Base, or bring in a file"],
   ["guide", "Guide", "How to set up and use the app"],
-  [null, "Court", "Lineup, rotation, substitutions and playing time · Phase 2"],
   [null, "Work", "Officials duties and the rotation · Phase 3"],
   [null, "Links", "Your helpful links · Phase 3"],
 ];

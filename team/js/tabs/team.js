@@ -2,7 +2,7 @@
 
 import * as db from "../db.js";
 import * as model from "../model.js";
-import { POSITIONS, STAFF_ROLES } from "../schema.js";
+import { POSITIONS, STAFF_ROLES, ROT_COUNTS } from "../schema.js";
 import { $, $$, esc, sheet, ask, say, toast } from "../ui.js";
 
 const posOptions = cur => `<option value="">—</option>` +
@@ -79,10 +79,12 @@ async function editRosterEntry(team, { r, p }, ctx) {
   const res = await sheet({ title: `${model.fullName(p)} on ${team.name}`,
     body: `<div class="grid2">
         <label class="field">Number on this team<input type="text" inputmode="numeric" id="r-num" value="${esc(r.number ?? "")}" maxlength="4"></label>
-        <label class="field">Position on this team<select id="r-pos">${posOptions(r.position)}</select></label></div>`,
+        <label class="field">Position on this team<select id="r-pos">${posOptions(r.position)}</select></label></div>
+      <label class="field">Rotation count<select id="r-rot">${ROT_COUNTS.map(v => `<option value="${v}"${String(r.rot ?? "") === v ? " selected" : ""}>${v ? v + " rotations" : "—"}</option>`).join("")}</select></label>
+      <p class="muted small" style="margin:0">With 3, the Court tab asks whether to substitute when she rotates between the front and back rows.</p>`,
     buttons: [{ label: "Save", value: "save", cls: "primary" }, { label: "Remove from team", value: "remove" },
       { label: "Edit player", value: "player" }, { label: "Cancel", value: null }] });
-  if (res.value === "save") { db.update("roster", r.id, { number: $("#r-num", res.el).value.trim(), position: $("#r-pos", res.el).value }); ctx.refresh(); }
+  if (res.value === "save") { db.update("roster", r.id, { number: $("#r-num", res.el).value.trim(), position: $("#r-pos", res.el).value, rot: $("#r-rot", res.el).value }); ctx.refresh(); }
   if (res.value === "remove" && await ask(`Take ${model.fullName(p)} off ${team.name}? She stays in the club list, and her stats are kept.`, "Remove")) {
     db.remove("roster", r.id); toast("Removed from team."); ctx.refresh();
   }
@@ -209,7 +211,7 @@ export function render(main, ctx) {
         <button class="btn small primary" type="button" id="pick">+ Add from club list</button></div>
       <div class="list">${roster.length ? roster.map(({ r, p }) => `<button type="button" class="item" data-r="${esc(r.id)}">
           <span class="num">${esc(r.number ?? "")}</span>
-          <span class="main-txt"><b>${esc(model.fullName(p))}</b><span class="sub">${esc(r.position || "No position")}${model.playerAge(p) !== "" ? " · age " + esc(model.playerAge(p)) : ""}</span></span>
+          <span class="main-txt"><b>${esc(model.fullName(p))}</b><span class="sub">${esc(r.position || "No position")}${r.rot ? " · rotation count " + esc(r.rot) : ""}${model.playerAge(p) !== "" ? " · age " + esc(model.playerAge(p)) : ""}</span></span>
           <span class="chev">›</span></button>`).join("")
         : `<p class="muted">No players on ${esc(team.name)} yet. Add them from the club list below, or import a CSV file.</p>`}</div>
     </section>

@@ -86,18 +86,29 @@ export function liveScore(matchId, setNo) {
 
 export const actionsFor = (matchId, fn = () => true) => db.where("actions", a => a.match_id === matchId && fn(a));
 
-// Record one tap. In point-by-point matches an Ace scores for us and an Out scores for them.
-export function record(match, playerId, skill, result) {
-  const set_no = curSet(match), tap = db.uuid(), rows = [];
+// Which taps score the rally automatically in point-by-point matches.
+// (An assisted block is shared by two players, so tap Point us once for it.)
+export function autoPoint(skill, result) {
+  if (skill === "serve") return result === "ace" ? "us" : result === "out" ? "them" : null;
+  if (skill === "attack") return result === "kill" ? "us" : result === "error" ? "them" : null;
+  if (skill === "block") return result === "solo" ? "us" : result === "error" ? "them" : null;
+  if (skill === "set") return result === "error" ? "them" : null;
+  return null;
+}
+
+// Record one tap. `extra` (serving side, lineup snapshot, rotation number) is stored on every row of the tap.
+export function record(match, playerId, skill, result, extra = {}) {
+  const set_no = curSet(match), tap = extra.tap || db.uuid(), rows = [];
   const pts = match.scoring === "points";
   const score = pts ? liveScore(match.id, set_no) : { us: null, them: null };
-  if (skill !== "point") rows.push(db.insert("actions", { match_id: match.id, set_no, player_id: playerId, skill, result, tap, us: score.us, them: score.them }));
+  const base = { match_id: match.id, set_no, tap, us: score.us, them: score.them, ...extra, tap };
+  if (skill !== "point") rows.push(db.insert("actions", { ...base, player_id: playerId, skill, result }));
   let point = skill === "point" ? result : null;
-  if (pts && skill === "serve") point = result === "ace" ? "us" : result === "out" ? "them" : null;
+  if (pts && skill !== "point") point = autoPoint(skill, result);
   if (point && (pts || skill === "point"))
-    rows.push(db.insert("actions", { match_id: match.id, set_no, player_id: skill === "point" ? null : playerId, skill: "point", result: point, tap, us: score.us, them: score.them }));
+    rows.push(db.insert("actions", { ...base, player_id: skill === "point" ? null : playerId, skill: "point", result: point }));
   if (match.status !== "played" && match.status !== "in progress") db.update("matches", match.id, { status: "in progress" });
-  return { rows, point, score: pts ? liveScore(match.id, set_no) : null };
+  return { rows, point, tap, score: pts ? liveScore(match.id, set_no) : null };
 }
 
 // Undo the most recent tap made on this device in this match (all rows of that tap).
@@ -111,14 +122,40 @@ export function undoLast(match) {
   return rows;
 }
 
-// Per-player serve/receive numbers for a set of actions.
+// Per-player numbers for a set of actions.
 export function tally(actions) {
-  const s = { serves: 0, ace: 0, in: 0, out: 0, passes: 0, passPts: 0, p: [0, 0, 0, 0] };
+  const s = { serves: 0, ace: 0, in: 0, out: 0, passes: 0, passPts: 0, p: [0, 0, 0, 0],
+              kill: 0, inplay: 0, atkErr: 0, solo: 0, blkAst: 0, blkErr: 0, setAst: 0, setErr: 0 };
   for (const a of actions) {
     if (a.skill === "serve") { s.serves++; if (s[a.result] != null) s[a.result]++; }
     else if (a.skill === "receive") { const v = Number(a.result); if (v >= 0 && v <= 3) { s.passes++; s.passPts += v; s.p[v]++; } }
+    else if (a.skill === "attack") { if (a.result === "kill") s.kill++; else if (a.result === "error") s.atkErr++; else s.inplay++; }
+    else if (a.skill === "block") { if (a.result === "solo") s.solo++; else if (a.result === "assist") s.blkAst++; else s.blkErr++; }
+    else if (a.skill === "set") { if (a.result === "assist") s.setAst++; else s.setErr++; }
   }
   s.srvPct = s.serves ? Math.round(((s.ace + s.in) / s.serves) * 100) : null;
   s.avg = s.passes ? (s.passPts / s.passes).toFixed(2) : null;
+  s.ta = s.kill + s.inplay + s.atkErr;
+  s.hitPct = s.ta ? ((s.kill - s.atkErr) / s.ta).toFixed(3).replace(/^(-?)0\./, "$1.") : null;
+  s.blocks = s.solo + s.blkAst / 2;
   return s;
 }
+
+// Team rally numbers from point rows that know who was serving.
+export function rallies(actions) {
+  const r = { total: 0, won: 0, rec: 0, so: 0, srv: 0, srvWon: 0 };
+  for (const a of actions) {
+    if (a.skill !== "point") continue;
+    r.total++; if (a.result === "us") r.won++;
+    if (a.serving === "them") { r.rec++; if (a.result === "us") r.so++; }
+    else if (a.serving === "us") { r.srv++; if (a.result === "us") r.srvWon++; }
+  }
+  r.soPct = r.rec ? Math.round((r.so / r.rec) * 100) : null;
+  r.srvPct = r.srv ? Math.round((r.srvWon / r.srv) * 100) : null;
+  return r;
+}
+
+// Roster helpers for court rules: position and rotation count on this team.
+export function rosterRow(teamId, pid) { return db.where("roster", r => r.team_id === teamId && r.player_id === pid)[0] || null; }
+export function teamPos(teamId, pid) { return rosterRow(teamId, pid)?.position || db.get("players", pid)?.position || ""; }
+export const isLibero = (teamId, pid) => !!pid && teamPos(teamId, pid) === "Libero";
