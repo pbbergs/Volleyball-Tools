@@ -8,8 +8,8 @@ const ITEMS = [
   ["stats", "Stats", "Serve, pass, attack, block, set and playing time"],
   ["sync", "Sync", "Send data to Home Base, or bring in a file"],
   ["guide", "Guide", "How to set up and use the app"],
-  [null, "Work", "Officials duties and the rotation · Phase 3"],
-  [null, "Links", "Your helpful links · Phase 3"],
+  ["work", "Work", "Officiating duties and the rotation"],
+  ["links", "Links", "Your helpful links"],
 ];
 
 export function render(main, ctx) {

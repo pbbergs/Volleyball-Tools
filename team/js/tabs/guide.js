@@ -85,6 +85,19 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li><b>Libero for a Middle:</b> when a Middle reaches position 1 (after rotating, or after you lose the serve) and the libero is on the bench, the app offers to bring the libero in.</li>
 </ul>`],
 
+["work", "Work rotation", `
+<p>When your team works as officials (score keeper, libero tracker, scoreboard, line judges, swing helper), More → <b>Work</b> keeps the jobs fair.</p>
+<ol>
+  <li>Tap <b>+ Record work</b>. The date fills in; add the match or court if you like.</li>
+  <li>Each player is suggested the job after her last one. With more than 10 players, the extras are <b>Off</b> this time and rotate in next time. The first time, jobs go in jersey order.</li>
+  <li>Change any job, or set a player to <b>Absent</b> (she keeps her place for next time). A red note warns if two players have the same job or a job has nobody.</li>
+  <li>Tap <b>Save</b>. The table shows how many times each player has done each job and when she last worked.</li>
+</ol>
+<p>Tap a past entry to fix it or delete it. Deleting puts the rotation back where it was.</p>`],
+
+["links", "Links", `
+<p>More → <b>Links</b> keeps the web pages you use often: tournament sites, rules, the club calendar. Tap <b>+ Add link</b>, give it a title and web address, and optionally a group such as Tournaments. Tap a link to open it; tap <b>Edit</b> to change or delete it. Links you add in Home Base's setup file reach every coach's phone.</p>`],
+
 ["stats", "Stats", `
 <p>More → Stats shows each player for the season, one match, or one set. Switch views at the top:</p>
 <ul>
@@ -144,7 +157,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
 
 ["next", "Coming next", `
 <ul>
-  <li><b>Phase 3:</b> Work rotation for officiating duties, Helpful links, more Home Base reports.</li>
+  <li><b>Next ideas:</b> reverse rotate, a match-day board (serve, pass and attack at a glance), scouting other teams' passers, the club logo, and finally an App Store version.</li>
 </ul>`],
 ];
 
