@@ -106,7 +106,8 @@ export function render(main, ctx) {
 
   $("#copy", main).onclick = async () => {
     const td = (v, i, th) => `<${th ? "th" : "td"} style="border:1px solid #c9d1da;padding:4px 10px;text-align:${i ? "center" : "left"}${th ? ";background:#eef2f6" : ""}">${esc(v)}</${th ? "th" : "td"}>`;
-    const html = `<p><b>${esc(title)}</b></p><table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px"><tr>${t.head.map((h, i) => td(h, i, true)).join("")}</tr>` +
+    const logo = model.clubLogo();
+    const html = `${logo ? `<p><img src="${logo}" alt="" height="48"></p>` : ""}<p><b>${esc(title)}</b></p><table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px"><tr>${t.head.map((h, i) => td(h, i, true)).join("")}</tr>` +
       t.body.map(r => `<tr>${r.map((c, i) => td(cell(c).v, i)).join("")}</tr>`).join("") + `</table><p style="font-size:12px;color:#5d6877">${esc(t.note)}</p>`;
     const text = [title, t.head.join("\t"), ...t.body.map(r => r.map(c => cell(c).v).join("\t")), "", t.note].join("\n");
     toast((await copyTable(html, text)) ? "Copied. Paste it into your email." : "Couldn't copy here. Use Export to Excel.");

@@ -30,6 +30,7 @@ a { color: var(--accent); }
 .top { background: var(--head); color: var(--head-ink); padding-top: env(safe-area-inset-top, 0px); }
 .top-in { max-width: 920px; margin: 0 auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
           padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.club-logo { height: 36px; width: auto; max-width: 72px; object-fit: contain; border-radius: 6px; background: #fff; padding: 2px; }
 .brand { font-family: var(--font-display); font-size: 26px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; }
 .ver { font-family: var(--font-body); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; opacity: .6; margin-left: 4px; }
 .team-name { margin-left: auto; font-weight: 600; opacity: .85; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
@@ -140,6 +141,13 @@ td.flag { background: var(--flag); }
 .seg button { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 0; background: none; padding: 9px 8px; border-radius: 9px; font-weight: 700; cursor: pointer; color: var(--muted); min-height: 40px; }
 .seg button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
 
+.courtchips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px; border-radius: 12px;
+              background: color-mix(in srgb, #f1e3c0 70%, var(--surface)); border: 2px solid var(--ink); border-top-width: 5px; }
+@media (prefers-color-scheme: dark) { .courtchips { background: #2a2820; } }
+.courtchips .pchip { position: relative; padding: 16px 6px 8px; min-height: 58px; justify-content: center; flex-direction: column; align-items: center; gap: 0; text-align: center; }
+.courtchips .pchip .pos { position: absolute; top: 3px; left: 6px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.courtchips .pchip.empty { border-style: dashed; color: var(--muted); cursor: default; }
+.courtchips .pchip.rowgap { margin-top: 6px; }
 .chip-sep { grid-column: 1 / -1; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-top: 4px; }
 .pchip.oncourt { border-color: color-mix(in srgb, var(--green) 55%, var(--line)); }
 .pchip.oncourt.sel { border-color: var(--accent); }
@@ -164,16 +172,21 @@ td.flag { background: var(--flag); }
 .cname { font-weight: 600; font-size: 14px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .crole { font-weight: 700; font-size: 12px; color: var(--muted); text-align: center; }
 .cempty { color: var(--muted); font-weight: 600; font-size: 14px; }
-.cbtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.cbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cbtns .btn { color: #fff; border: 0; font-size: 15px; padding: 10px 6px; }
-.cbtns .o1 { background: #c2410c; } .cbtns .o2 { background: #e2570b; } .cbtns .o3 { background: #f97316; }
+.cbtns .o1 { background: #c2410c; } .cbtns .o1b { background: #9a3412; } .cbtns .o2 { background: #e2570b; } .cbtns .o3 { background: #f97316; }
 
 /* Work and links */
 .work-pick { display: grid; gap: 6px; max-height: 52vh; overflow-y: auto; }
 .wp-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); align-items: center; color: var(--ink); font-size: 15px; }
 table.matrix th, table.matrix td { padding: 8px 6px; font-size: 14px; }
-table.matrix td:not(:first-child) { font-weight: 700; }
+table.matrix td:not(:first-child) { font-weight: 700; font-family: var(--font-display); font-size: 16px; }
+table.matrix th { white-space: normal; line-height: 1.2; min-width: 58px; }
+table.matrix td.off { color: var(--muted); font-weight: 600; }
+button.linkish { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-transform: none; letter-spacing: 0; font-weight: 700; }
+table.matrix td.abs { color: var(--red); font-weight: 600; }
 .link-row { cursor: default; }
+.link-row .btn + .btn { margin-left: 6px; }
 .link-row a { color: inherit; text-decoration: none; }
 .link-row a b { color: var(--accent); }
 

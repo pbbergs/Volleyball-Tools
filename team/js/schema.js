@@ -2,7 +2,7 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v2026.11.16b";
+export const APP_VERSION = "v2026.11.16c";
 export const SCHEMA_VERSION = 1;          // bump when a new table is added
 export const SYNC_FORMAT = "vbteam-sync";
 export const SYNC_FORMAT_VERSION = 1;
@@ -28,7 +28,7 @@ export const POSITIONS = ["Setter", "Pin", "Middle", "Right Side", "Libero", "DS
 export const ROT_COUNTS = ["", "3", "6"];
 export const DEFAULT_ROLES = { 1: "Setter 1", 2: "Pin 1", 3: "Middle 1", 4: "Opposite 1", 5: "Pin 2", 6: "Middle 2" };
 // Short column labels for the work matrix, by duty order.
-export const DUTY_SHORT = ["Score", "Libero", "Board", "LJ 1A", "LJ 1B", "LJ 2A", "LJ 2B", "LJ 3A", "LJ 3B", "Swing"];
+export const DUTY_SHORT = ["Score", "LibTr", "Board", "LJ1A", "LJ1B", "LJ2A", "LJ2B", "LJ3A", "LJ3B", "Swing"];
 export const STAFF_ROLES = ["Head coach", "Assistant coach 1", "Assistant coach 2", "Assistant coach 3"];
 
 // skill -> allowed results, in button order

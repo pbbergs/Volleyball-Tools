@@ -96,36 +96,30 @@ async function recordWork(team, ctx, existing = null) {
 export function render(main, ctx) {
   const team = model.currentTeam();
   if (!team) { main.innerHTML = `<section class="card"><h2>Work</h2><p>Create a team first.</p></section>`; return; }
-  const entries = model.rosterFor(team.id), ds = duties(), list = sessions(team.id);
-  const count = {};
-  for (const s of list) for (const w of s.rows) {
-    const c = (count[w.player_id] ||= { d: {}, off: 0, absent: 0, last: "" });
-    if (w.status === "worked" && w.duty_id) c.d[w.duty_id] = (c.d[w.duty_id] || 0) + 1;
-    else if (w.status === "off") c.off++; else if (w.status === "absent") c.absent++;
-    if (w.status === "worked" && (w.date || "") > c.last) c.last = w.date;
-  }
+  const entries = model.rosterFor(team.id), ds = duties(), list = sessions(team.id);   // newest first
+  const code = w => (w.status === "absent" ? ["Abs", "abs"] : w.status === "off" || !w.duty_id ? ["Off", "off"]
+    : [DUTY_SHORT[ds.findIndex(d => d.id === w.duty_id)] || "?", ""]);
   const names = model.shortNames(entries);
+  const head = s => `${esc(fmtDate(s.date, { month: "short", day: "numeric" }))}${s.label ? `<br><span class="muted">${esc(s.label.slice(0, 12))}</span>` : ""}`;
   main.innerHTML = `<section class="card">
       <div class="card-head"><h2>Work</h2><span class="grow"></span>
         <button class="btn small primary" type="button" id="rec">+ Record work</button></div>
       <p class="small" style="margin:0">When ${esc(team.name)} works as officials, tap <b>Record work</b>. Each player is suggested the next job after her last one, so everyone rotates through all ${ds.length} jobs.</p>
     </section>
     <section class="card">
-      <h3>Who has done what</h3>
-      <div class="scroll"><table class="matrix">
-        <thead><tr><th>Player</th>${DUTY_SHORT.map((d, i) => `<th title="${esc(ds[i]?.name || d)}">${esc(d)}</th>`).join("")}<th>Off</th><th>Last worked</th></tr></thead>
-        <tbody>${entries.map(({ r, p }) => { const c = count[p.id] || { d: {}, off: 0, last: "" }; return `<tr>
-          <td>#${esc(r.number ?? "")} ${esc(names[p.id])}</td>${ds.map(d => `<td>${c.d[d.id] || ""}</td>`).join("")}
-          <td>${c.off || ""}</td><td>${c.last ? esc(fmtDate(c.last, { month: "short", day: "numeric" })) : "-"}</td></tr>`; }).join("")}</tbody>
+      <h3>Who did what</h3>
+      ${list.length ? `<div class="scroll"><table class="matrix">
+        <thead><tr><th>Player</th>${list.map(s => `<th><button type="button" class="linkish" data-s="${esc(s.id)}">${head(s)}</button></th>`).join("")}</tr></thead>
+        <tbody>${entries.map(({ r, p }) => `<tr><td>#${esc(r.number ?? "")} ${esc(names[p.id])}</td>${list.map(s => {
+          const w = s.rows.find(x => x.player_id === p.id);
+          if (!w) return "<td></td>";
+          const [c, cls] = code(w);
+          return `<td class="${cls}">${esc(c)}</td>`;
+        }).join("")}</tr>`).join("")}</tbody>
       </table></div>
-      <p class="muted small" style="margin:0">${ds.map((d, i) => `${DUTY_SHORT[i]} = ${d.name}`).join(" · ")}</p>
-    </section>
-    <section class="card">
-      <h3>Past work</h3>
-      <div class="list">${list.length ? list.map(s => `<button type="button" class="item" data-s="${esc(s.id)}">
-          <span class="main-txt"><b>${esc(fmtDate(s.date))}${s.label ? " · " + esc(s.label) : ""}</b>
-          <span class="sub">${s.rows.filter(w => w.status === "worked").length} working · ${s.rows.filter(w => w.status === "off").length} off · ${s.rows.filter(w => w.status === "absent").length} absent</span></span>
-          <span class="chev">›</span></button>`).join("") : `<p class="muted">Nothing recorded yet.</p>`}</div>
+      <p class="muted small" style="margin:0"><b>Key:</b> ${ds.map((d, i) => `${DUTY_SHORT[i]} = ${esc(d.name)}`).join(" · ")} · Off = sat out this time · Abs = absent</p>
+      <p class="muted small" style="margin:0">Newest first. Tap a date to fix or delete that record.</p>`
+      : `<p class="muted">Nothing recorded yet.</p>`}
     </section>`;
   $("#rec", main).onclick = () => recordWork(team, ctx);
   for (const b of $$("[data-s]", main)) b.onclick = () => recordWork(team, ctx, list.find(s => s.id === b.dataset.s));

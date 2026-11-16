@@ -106,6 +106,20 @@ export function rotate(m, s, tap = null) {
   return { ok: true };
 }
 
+// Counterclockwise, one spot back: 1->2, 2->3, 3->4, 4->5, 5->6, 6->1. For fixing a lineup that got ahead;
+// no prompts, and allowed even with the libero in the front row (it can move her back out).
+export function rotateBack(m, s) {
+  remember(s);
+  const L = s.lineup, R = s.roles;
+  s.lineup = { 1: L[6], 2: L[1], 3: L[2], 4: L[3], 5: L[4], 6: L[5] };
+  s.roles = { 1: R[6], 2: R[1], 3: R[2], 4: R[3], 5: R[4], 6: R[5] };
+  s.rot = Math.max(0, s.rot - 1);
+  s.prompts = [];
+  log(m, s, "rotate_back", null, null);
+  save(m, s);
+  return { ok: true };
+}
+
 export function undoLineup(m, s) {
   const h = s.hist.pop();
   if (!h) return false;

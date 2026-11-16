@@ -1,7 +1,7 @@
 // Helpful links: add, edit, open. They travel to other phones in the setup file from Home Base.
 
 import * as db from "../db.js";
-import { $, $$, esc, sheet, ask, toast, numSort } from "../ui.js";
+import { $, $$, esc, sheet, ask, toast, numSort, copyTable } from "../ui.js";
 
 const normalize = u => { u = u.trim(); if (!u) return ""; return /^[a-z]+:\/\//i.test(u) ? u : "https://" + u; };
 const validUrl = u => { if (!/^https?:\/\/[^\s/]+\.[^\s/]+/i.test(u) || /\s/.test(u)) return false; try { new URL(u); return true; } catch { return false; } };
@@ -35,7 +35,11 @@ export function render(main, ctx) {
     </section>
     ${Object.entries(groups).map(([g, ls]) => `<section class="card"><h3>${esc(g)}</h3><div class="list">${ls.map(l => `
       <div class="item link-row"><a class="main-txt" href="${esc(l.url)}" target="_blank" rel="noopener"><b>${esc(l.title)}</b><span class="sub">${esc(l.url.replace(/^https?:\/\//, ""))}</span></a>
-        <button type="button" class="btn small" data-e="${esc(l.id)}">Edit</button></div>`).join("")}</div></section>`).join("")}`;
+        <button type="button" class="btn small" data-c="${esc(l.id)}">Copy</button><button type="button" class="btn small" data-e="${esc(l.id)}">Edit</button></div>`).join("")}</div></section>`).join("")}`;
   $("#add", main).onclick = () => editLink(ctx);
   for (const b of $$("[data-e]", main)) b.onclick = () => editLink(ctx, db.get("links", b.dataset.e));
+  for (const b of $$("[data-c]", main)) b.onclick = async () => {
+    const url = db.get("links", b.dataset.c).url;
+    toast((await copyTable(esc(url), url)) ? "Link copied. Paste it into any browser." : "Couldn't copy. Press and hold the link instead.");
+  };
 }

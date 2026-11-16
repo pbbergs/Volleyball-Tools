@@ -64,7 +64,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
     </ul></li>
   <li>In a point-by-point match, answer <b>Who serves first?</b> at the start of each set.</li>
   <li><b>Court</b> (button in the dark match bar, or More → Court): tap a bench player, then a court position, for each of the starting six. See the next section.</li>
-  <li><b>Serve tab:</b> the player at position 1 is picked for you when the court is set; otherwise tap the server. Then <b>Ace</b>, <b>In</b> or <b>Out</b>.</li>
+  <li><b>Serve tab:</b> the player at position 1 is picked for you when the court is set; otherwise tap the server. Then <b>Ace</b>, <b>In</b> or <b>Out</b>. On Serve, Receive and Attack the players on the court are laid out just like the Court tab (4 3 2 front, 5 6 1 back), with the bench below.</li>
   <li><b>Receive tab:</b> tap the passer (players on the court are listed first), then <b>0</b>–<b>3</b>.</li>
   <li><b>Attack tab:</b> choose <b>Attack</b>, <b>Block</b> or <b>Set</b> at the top, tap the player, then the result.</li>
   <li><b>Undo last</b> removes the last tap you made on this phone in this match, including a point it scored and a rotation it caused.</li>
@@ -78,6 +78,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li><b>Lineup:</b> tap a bench player, then a position. If someone was there she goes to the bench; that's a substitution (filling an empty spot isn't). Tap a player on the court to select her, then <b>Take off court</b>.</li>
   <li><b>Roles:</b> each position carries a role that moves with it: 1 Setter 1, 2 Pin 1, 3 Middle 1, 4 Opposite 1, 5 Pin 2, 6 Middle 2. Setter 1 shows as Opposite 2 in the front row, and Opposite 1 as Setter 2 in the back row. A libero always shows as Libero.</li>
   <li><b>Rotate</b> moves everyone clockwise (4→3, 3→2, 2→1, 1→6, 6→5, 5→4). In point-by-point matches the court rotates by itself when you win a rally on their serve (a side out). Turn that off with <b>Rotate on side outs</b>.</li>
+  <li><b>Rotate back</b> moves everyone one spot the other way (1→2 … 6→1), for fixing a lineup that got ahead. It asks nothing and counts nothing.</li>
   <li><b>Undo lineup change</b> steps back through lineup changes, restoring the substitution count too. It never removes recorded stats.</li>
   <li><b>Substitutions:</b> 15 per set, shown at the top. Changes involving the libero don't count. After 15, counted substitutions are blocked.</li>
   <li><b>Libero in the front row:</b> a red notice appears and Rotate is off until you bring someone in for her: just tap a bench player.</li>
@@ -91,12 +92,12 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li>Tap <b>+ Record work</b>. The date fills in; add the match or court if you like.</li>
   <li>Each player is suggested the job after her last one. With more than 10 players, the extras are <b>Off</b> this time and rotate in next time. The first time, jobs go in jersey order.</li>
   <li>Change any job, or set a player to <b>Absent</b> (she keeps her place for next time). A red note warns if two players have the same job or a job has nobody.</li>
-  <li>Tap <b>Save</b>. The table shows how many times each player has done each job and when she last worked.</li>
+  <li>Tap <b>Save</b>. The <b>Who did what</b> table shows each player's job every time the team worked, newest first, using short codes: Score, LibTr (Libero tracker), Board (Scoreboard), LJ1A to LJ3B (line judges), Swing, Off, Abs. The key is under the table.</li>
 </ol>
-<p>Tap a past entry to fix it or delete it. Deleting puts the rotation back where it was.</p>`],
+<p>Tap a date at the top of the table to fix or delete that record. Deleting puts the rotation back where it was.</p>`],
 
 ["links", "Links", `
-<p>More → <b>Links</b> keeps the web pages you use often: tournament sites, rules, the club calendar. Tap <b>+ Add link</b>, give it a title and web address, and optionally a group such as Tournaments. Tap a link to open it; tap <b>Edit</b> to change or delete it. Links you add in Home Base's setup file reach every coach's phone.</p>`],
+<p>More → <b>Links</b> keeps the web pages you use often: tournament sites, rules, the club calendar. Tap <b>+ Add link</b>, give it a title and web address, and optionally a group such as Tournaments. Tap a link to open it. On the iPhone it opens in a Safari window; tap the compass icon there to move it to the full Safari app. To use another browser such as Chrome, tap <b>Copy</b> and paste the address there. Tap <b>Edit</b> to change or delete a link. Links you add in Home Base's setup file reach every coach's phone.</p>`],
 
 ["stats", "Stats", `
 <p>More → Stats shows each player for the season, one match, or one set. Switch views at the top:</p>
@@ -135,6 +136,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li>Double-click <code>start-home-base.bat</code>. Leave the black window open; your browser opens Home Base at <code>http://localhost:8770</code>.</li>
   <li>The Dashboard imports files, downloads setup files, and lists recent imports. Reports show season stats (serve, pass, attack, block, set), playing time, match results and the schedule.</li>
 </ol>
+<p><b>Club logo:</b> on the Home Base dashboard, under <b>Club logo</b>, choose the image (PNG or JPG). It goes out in the next <b>setup file</b>, so each phone shows it in the app's header after importing; it also appears on Home Base's pages and at the top of emailed stats. The Home Screen icon is separate: click <b>Download app icon</b>, upload that <code>icon.png</code> into the <code>team</code> folder on GitHub, and each phone re-adds the app to the Home Screen once.</p>
 <p>The master database is <code>volleyball.db</code> in that folder: a normal SQLite file you can open with DB Browser for SQLite. Home Base keeps a copy of every imported file in <code>imports</code> and a daily backup of the database in <code>backups</code>.</p>`],
 
 ["data", "Keeping your data safe", `
@@ -157,7 +159,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
 
 ["next", "Coming next", `
 <ul>
-  <li><b>Next ideas:</b> reverse rotate, a match-day board (serve, pass and attack at a glance), scouting other teams' passers, the club logo, and finally an App Store version.</li>
+  <li><b>Next ideas:</b> a match-day board (serve, pass and attack at a glance), scouting other teams' passers, the club logo, and finally an App Store version.</li>
 </ul>`],
 ];
 

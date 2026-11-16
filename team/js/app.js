@@ -47,6 +47,8 @@ function show(v) {
   for (const b of $$(".tabbar button")) b.toggleAttribute("aria-current", b.dataset.tab === VIEWS[v][1]);
   const t = model.currentTeam();
   $("#team-name").textContent = t ? t.name : "";
+  const logo = model.clubLogo(), img = $("#club-logo");
+  if (logo) { if (img.src !== logo) img.src = logo; img.hidden = false; } else img.hidden = true;
 }
 
 function route() {

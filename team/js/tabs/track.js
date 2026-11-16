@@ -35,7 +35,7 @@ function summary(skill, m, pid) {
   }
 }
 
-// Players on the court first (in court order 1-6), then the bench by number.
+// Who is on the court (player id -> position); the bench in jersey order.
 function ordered(m, entries) {
   const s = court.state(m), pos = Object.fromEntries(Object.entries(s.lineup).filter(([, v]) => v).map(([k, v]) => [v, +k]));
   return { s, list: [...entries].sort((a, b) => (pos[a.p.id] || 99) - (pos[b.p.id] || 99)), pos };
@@ -62,13 +62,22 @@ function trackCard(main, ctx, m, skill, heading) {
   }
   if (!entries.some(e => e.p.id === sel)) sel = null;
   const hasCourt = Object.keys(pos).length > 0;
+  const chip = ({ r, p }, extra = "") => `<button type="button" class="pchip${p.id === sel ? " sel" : ""}${extra}" data-p="${esc(p.id)}">
+      <span class="n">${esc(r.number ?? "")}</span><span class="nm">${esc(names[p.id])}</span></button>`;
+  const byId = Object.fromEntries(entries.map(e => [e.p.id, e]));
+  // Players on the court are laid out exactly like the Court tab: 4 3 2 across the front, 5 6 1 across the back.
+  const courtHtml = hasCourt ? `<div class="courtchips" aria-label="On the court">${[4, 3, 2, 5, 6, 1].map(n => {
+      const e = byId[s.lineup[n]];
+      return e ? chip(e, " oncourt").replace('<span class="n">', `<span class="pos">${n}</span><span class="n">`)
+               : `<div class="pchip empty"><span class="pos">${n}</span>—</div>`;
+    }).join("")}</div>` : "";
+  const bench = list.filter(e => !pos[e.p.id]);
 
   main.insertAdjacentHTML("beforeend", `<section class="card">
       <div class="card-head">${heading}<span class="grow"></span>
         <span class="muted small">${note || (skill === "serve" ? "Pick the server" : "Pick the player")}</span></div>
-      <div class="chips">${list.map(({ r, p }, i) => `${hasCourt && i === Object.keys(pos).length ? `<div class="chip-sep">Bench</div>` : ""}
-        <button type="button" class="pchip${p.id === sel ? " sel" : ""}${pos[p.id] ? " oncourt" : ""}" data-p="${esc(p.id)}">
-          <span class="n">${esc(r.number ?? "")}</span><span class="nm">${esc(names[p.id])}</span></button>`).join("")}</div>
+      ${courtHtml}
+      <div class="chips">${hasCourt && bench.length ? `<div class="chip-sep">Bench</div>` : ""}${bench.map(e => chip(e)).join("")}</div>
     </section>
     <section class="card">
       <div class="results">${BUTTONS[skill].map(([v, l, c]) => `<button type="button" class="res ${c}" data-r="${esc(v)}">${esc(l)}</button>`).join("")}</div>

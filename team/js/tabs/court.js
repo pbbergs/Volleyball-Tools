@@ -60,7 +60,8 @@ export function render(main, ctx) {
       <div class="net" aria-hidden="true">NET</div>
       <div class="court">${[4, 3, 2].map(box).join("")}${[5, 6, 1].map(box).join("")}</div>
       <div class="cbtns">
-        <button class="btn o1" type="button" id="rot" ${lf ? "disabled" : ""}>Rotate</button>
+        <button class="btn o1" type="button" id="rot" ${lf ? "disabled" : ""}>Rotate ↻</button>
+        <button class="btn o1b" type="button" id="rotb">↺ Rotate back</button>
         <button class="btn o2" type="button" id="off" ${selPos ? "" : "disabled"}>Take off court</button>
         <button class="btn o3" type="button" id="und" ${s.hist.length ? "" : "disabled"}>Undo lineup change</button>
       </div>
@@ -72,7 +73,7 @@ export function render(main, ctx) {
         || `<p class="muted">Everyone is on the court.</p>`}</div>
       <p class="muted small" style="margin:0">Tap a bench player, then a court position to put her there. Whoever was there goes to the bench
         (a substitution, unless it involves the libero). Tap a player on the court to select her, then Take off court.
-        Rotate moves everyone clockwise. In point-by-point matches the court rotates by itself on a side out, and the server at position 1 is picked on the Serve tab.</p>
+        Rotate moves everyone clockwise; Rotate back moves everyone one spot the other way. In point-by-point matches the court rotates by itself on a side out, and the server at position 1 is picked on the Serve tab.</p>
     </section>`);
 
   const go = () => ctx.refresh();
@@ -97,6 +98,7 @@ export function render(main, ctx) {
     armed = armed === pid ? null : pid; go();
   };
   $("#rot", main).onclick = () => { const r = court.rotate(m, s); if (r.error) say(r.error); selPos = null; go(); };
+  $("#rotb", main).onclick = () => { court.rotateBack(m, s); selPos = null; go(); };
   $("#off", main).onclick = () => { if (selPos) court.takeOff(m, s, selPos); selPos = null; go(); };
   $("#und", main).onclick = () => { court.undoLineup(m, s); armed = null; selPos = null; go(); };
   $("#p-keep", main) && ($("#p-keep", main).onclick = () => { court.dismissPrompt(m, s); go(); });

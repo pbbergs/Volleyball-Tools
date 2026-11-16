@@ -159,3 +159,9 @@ export function rallies(actions) {
 export function rosterRow(teamId, pid) { return db.where("roster", r => r.team_id === teamId && r.player_id === pid)[0] || null; }
 export function teamPos(teamId, pid) { return rosterRow(teamId, pid)?.position || db.get("players", pid)?.position || ""; }
 export const isLibero = (teamId, pid) => !!pid && teamPos(teamId, pid) === "Libero";
+
+// Club logo: set in Home Base, arrives in the setup file (settings row "club_logo", an image data URL).
+export function clubLogo() {
+  const r = db.where("settings", x => x.key === "club_logo")[0];
+  return r && typeof r.value === "string" && r.value.startsWith("data:image/") ? r.value : null;
+}
