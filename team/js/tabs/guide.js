@@ -4,7 +4,7 @@ import { $$ } from "../ui.js";
 
 const SECTIONS = [
 ["what", "What the app does", `
-<p>The Team app tracks your volleyball team on your iPhone: the roster, the season schedule, and serve and serve-receive stats during matches. Each coach can use it on their own phone. A program on your PC called <b>Home Base</b> keeps the master database for the whole club and collects everyone's data.</p>
+<p>The Team app tracks your volleyball team on your phone (iPhone or Android): the roster, the season schedule, and serve and serve-receive stats during matches. Each coach can use it on their own phone. A program on your PC called <b>Home Base</b> keeps the master database for the whole club and collects everyone's data.</p>
 <ul>
   <li><b>Serve:</b> Ace, In, Out for each serve.</li>
   <li><b>Receive:</b> rate each pass 0, 1, 2 or 3 (3 = perfect, 2 = good, 1 = poor but playable, 0 = shanked, overpassed or aced).</li>
@@ -28,14 +28,14 @@ const SECTIONS = [
 <ol>
   <li>Open <b>Chrome</b> and go to <code>pbbergs.github.io/Volleyball-Tools/team/</code>.</li>
   <li>Tap the <b>⋮</b> menu, then <b>Install app</b> (or <b>Add to Home screen</b> → <b>Install</b>).</li>
-  <li>Open <b>Team</b> from the Home screen. It opens full screen like any other app, and syncs with Home Base and the iPhones the same way.</li>
+  <li>Open <b>Team</b> from the Home screen. It opens full screen like any other app, and syncs with Home Base and the other phones the same way.</li>
 </ol>
 <p>After you've opened it once, the app works with no internet at the gym. When a new version is posted, a bar at the bottom says <b>New version available</b>; tap <b>Update</b>. Your data stays.</p>
 <p><b>Version numbers</b> (top of the screen) work like v1.2.3: the first number changes for a big release (v2.0 will be the App Store version), the middle one for a new feature, and the last one for a small fix. Home Base on the PC has its own number in the same style.</p>`],
 
 ["setup", "First-time setup", `
 <ol>
-  <li><b>Name this device</b> when the app asks, for example <i>Coach Paul iPhone</i>. Change it later on More → Sync.</li>
+  <li><b>Name this device</b> when the app asks, for example <i>Coach Paul phone</i>. Change it later on More → Sync.</li>
   <li><b>Create your team</b> on More → Team: team name and season.</li>
   <li><b>Coaches:</b> fill in the head coach and up to three assistant coaches on the same page.</li>
   <li><b>Players:</b> tap <b>+ New player</b>, or <b>Import CSV…</b> to load a whole list (see the next section). New players are added to the club list and to the team you're working with.</li>
@@ -59,7 +59,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li><b>Team</b> puts each player on that team, creating the team if it doesn't exist. With no Team column, players go on the team you're working with.</li>
   <li>Players already in the club list (same first and last name) aren't added twice.</li>
   <li>Tryouts: put tryout numbers (101, 102…) in the Number column, or in First Name if you don't know names yet.</li>
-  <li>In Excel use <b>Save As → CSV</b>. To get the file onto the iPhone, email it to yourself and use Share → <b>Save to Files</b>.</li>
+  <li>In Excel use <b>Save As → CSV</b>. To get the file onto your phone, email it to yourself and save the attachment (on an iPhone: Share → <b>Save to Files</b>; on Android it goes to Downloads).</li>
 </ul>`],
 
 ["match", "Match day", `
@@ -126,7 +126,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
 <p>Tap a date at the top of the table to fix or delete that record. Deleting puts the rotation back where it was.</p>`],
 
 ["links", "Links", `
-<p>More → <b>Links</b> keeps the web pages you use often: tournament sites, rules, the club calendar. Tap <b>+ Add link</b>, give it a title and web address, and optionally a group such as Tournaments. Tap a link to open it. On the iPhone it opens in a Safari window; tap the compass icon there to move it to the full Safari app. To use another browser such as Chrome, tap <b>Copy</b> and paste the address there. Tap <b>Edit</b> to change or delete a link. Links you add in Home Base's setup file reach every coach's phone.</p>`],
+<p>More → <b>Links</b> keeps the web pages you use often: tournament sites, rules, the club calendar. Tap <b>+ Add link</b>, give it a title and web address, and optionally a group such as Tournaments. Tap a link to open it. On an iPhone it opens in a Safari window; tap the compass icon there to move it to the full Safari app. On Android it opens in Chrome. To use another browser such as Chrome, tap <b>Copy</b> and paste the address there. Tap <b>Edit</b> to change or delete a link. Links you add in Home Base's setup file reach every coach's phone.</p>`],
 
 ["stats", "Stats", `
 <p>More → Stats shows each player for the season, one match, or one set. Switch views at the top:</p>
@@ -165,7 +165,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li>Double-click <code>start-home-base.bat</code>. Leave the black window open; your browser opens Home Base at <code>http://localhost:8770</code>.</li>
   <li>The Dashboard imports files, downloads setup files, and lists recent imports. Reports show season stats (serve, pass, attack, block, set), playing time, match results and the schedule.</li>
 </ol>
-<p><b>Club logo:</b> on the Home Base dashboard, under <b>Club logo</b>, choose the image (PNG or JPG). It goes out in the next <b>setup file</b>, so each phone shows it in the app's header after importing; it also appears on Home Base's pages and at the top of emailed stats. The Home Screen icon is separate: click <b>Download app icon</b>, upload the three files it saves (<code>icon.png</code> for iPhones, <code>icon-192.png</code> and <code>icon-512.png</code> for Android) into the <code>team</code> folder on GitHub, and each phone re-adds the app to the Home Screen once.</p>
+<p><b>Club logo:</b> on the Home Base dashboard, under <b>Club logo</b>, choose the image (PNG or JPG). It goes out in the next <b>setup file</b>, so each phone shows it in the app's header after importing; it also appears on Home Base's pages and at the top of emailed stats. The Home Screen icon is separate: click <b>Download app icon</b>, upload the three files it saves (<code>icon.png</code> for iPhones and iPads, <code>icon-192.png</code> and <code>icon-512.png</code> for Android) into the <code>team</code> folder on GitHub, and each phone re-adds the app to the Home Screen once.</p>
 <p>The master database is <code>volleyball.db</code> in that folder: a normal SQLite file you can open with DB Browser for SQLite. Home Base keeps a copy of every imported file in <code>imports</code> and a daily backup of the database in <code>backups</code>.</p>`],
 
 ["data", "Keeping your data safe", `

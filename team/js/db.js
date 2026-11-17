@@ -68,7 +68,7 @@ export const getLocal = (k, d = null) => (local.has(k) ? local.get(k) : d);
 export function setLocal(k, v) { local.set(k, v); return write("local", { key: k, value: v }); }
 
 // ---------- synced tables ----------
-export const deviceName = () => getLocal("device_name") || "iPhone";
+export const deviceName = () => getLocal("device_name") || "Phone";
 const stamp = () => getLocal("device_name") || getLocal("device_id") || "device";
 
 export function all(table, { withDeleted = false } = {}) {

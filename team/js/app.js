@@ -106,12 +106,12 @@ async function boot() {
     const r = await sheet({
       title: "Welcome",
       body: `<p class="sheet-msg">Give this device a name. It appears on sync files so you can tell whose data is whose.</p>
-             <label class="field">Device name<input type="text" id="dev-name" placeholder="e.g. Coach Paul iPhone" maxlength="40"></label>`,
+             <label class="field">Device name<input type="text" id="dev-name" placeholder="e.g. Coach Paul phone" maxlength="40"></label>`,
       buttons: [{ label: "Save", value: true, cls: "primary" }],
       check: el => ($("#dev-name", el).value.trim() ? true : "Type a name for this device."),
     });
     const name = r.value ? $("#dev-name", r.el).value.trim() : "";
-    await db.setLocal("device_name", name || "iPhone");
+    await db.setLocal("device_name", name || "Phone");
   }
   window.addEventListener("hashchange", route);
   route();
