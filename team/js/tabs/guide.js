@@ -23,7 +23,8 @@ const SECTIONS = [
   <li>Open <b>Volleyball Tools</b> from the Home Screen and tap <b>Team</b>.</li>
   <li>Always open the app the same way. Data saved from the Home Screen icon is separate from data in Safari itself.</li>
 </ol>
-<p>After you've opened it once, the app works with no internet at the gym. When a new version is posted, a bar at the bottom says <b>New version available</b>; tap <b>Update</b>. Your data stays.</p>`],
+<p>After you've opened it once, the app works with no internet at the gym. When a new version is posted, a bar at the bottom says <b>New version available</b>; tap <b>Update</b>. Your data stays.</p>
+<p><b>Version numbers</b> (top of the screen) work like v1.2.3: the first number changes for a big release (v2.0 will be the App Store version), the middle one for a new feature, and the last one for a small fix. Home Base on the PC has its own number in the same style.</p>`],
 
 ["setup", "First-time setup", `
 <ol>
