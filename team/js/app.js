@@ -2,7 +2,7 @@
 
 import * as db from "./db.js";
 import { $, $$, esc, toast, sheet } from "./ui.js";
-import { APP_VERSION } from "./schema.js";
+import { APP_VERSION, RELEASE_NOTES } from "./schema.js";
 import * as model from "./model.js";
 import * as track from "./tabs/track.js";
 import * as schedule from "./tabs/schedule.js";
@@ -97,12 +97,24 @@ $("#update-btn").addEventListener("click", async () => {
   location.reload();
 });
 
+// ---------- what's new ----------
+const vparts = v => String(v || "").replace(/^v/, "").split(".").map(n => +n || 0);
+const newer = (a, b) => { const x = vparts(a), y = vparts(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+function showNotes(since) {
+  const list = RELEASE_NOTES.filter(([v]) => (since ? newer(v, since) : true) && !newer(v, APP_VERSION)).slice(0, since ? 99 : 4);
+  if (!list.length) return;
+  sheet({ title: since ? `What's new in ${APP_VERSION}` : "What's new",
+    body: list.map(([v, notes]) => `<h3 class="wn-v">${esc(v)}</h3><ul class="wn">${notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`).join(""),
+    buttons: [{ label: "OK", value: true, cls: "primary" }] });
+}
+
 // ---------- start ----------
 async function boot() {
   $("#ver").textContent = APP_VERSION;
   if (hosted) $("#home-link").hidden = false;
   await db.open(msg => toast(msg));
-  if (!db.getLocal("device_name")) {
+  const brandNew = !db.getLocal("device_name");
+  if (brandNew) {
     const r = await sheet({
       title: "Welcome",
       body: `<p class="sheet-msg">Give this device a name. It appears on sync files so you can tell whose data is whose.</p>
@@ -115,6 +127,12 @@ async function boot() {
   }
   window.addEventListener("hashchange", route);
   route();
+  // Once per update: show what changed since the version this device last saw (not on a brand-new device).
+  const seen = db.getLocal("seen_version");
+  if (!brandNew && seen !== APP_VERSION) showNotes(seen || RELEASE_NOTES.find(([v]) => newer(APP_VERSION, v))?.[0] || "v0");
+  if (seen !== APP_VERSION) db.setLocal("seen_version", APP_VERSION);
+  $("#ver").setAttribute("role", "button"); $("#ver").title = "What's new";
+  $("#ver").addEventListener("click", () => showNotes(null));
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1"))
     navigator.serviceWorker.register("sw.js").catch(() => {});
   document.addEventListener("visibilitychange", checkForUpdate);

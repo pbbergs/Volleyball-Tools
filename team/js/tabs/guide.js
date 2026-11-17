@@ -19,19 +19,19 @@ const SECTIONS = [
 ["install", "Put the app on your phone", `
 <p><b>iPhone:</b></p>
 <ol>
-  <li>Open <b>Safari</b> and go to <code>pbbergs.github.io/Volleyball-Tools/</code>. It must be Safari.</li>
-  <li>Tap <b>Share</b> (square with an up arrow), then <b>Add to Home Screen</b>, then <b>Add</b>. This adds the Volleyball Tools menu.</li>
-  <li>Open <b>Volleyball Tools</b> from the Home Screen and tap <b>Team</b>.</li>
+  <li>Open <b>Safari</b> and go to <code>pbbergs.github.io/Volleyball-Tools/team/</code>, or scan the QR code on Home Base's <b>Add a coach</b> page with the Camera. It must open in Safari.</li>
+  <li>Tap <b>Share</b> (square with an up arrow), then <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+  <li>Open <b>Team</b> from the Home Screen. (If you already open it from a <b>Volleyball Tools</b> icon, keep doing that: your data lives there.)</li>
   <li>Always open the app the same way. Data saved from the Home Screen icon is separate from data in Safari itself.</li>
 </ol>
 <p><b>Android:</b></p>
 <ol>
-  <li>Open <b>Chrome</b> and go to <code>pbbergs.github.io/Volleyball-Tools/team/</code>.</li>
+  <li>Open <b>Chrome</b> and go to <code>pbbergs.github.io/Volleyball-Tools/team/</code>, or scan the QR code on Home Base's <b>Add a coach</b> page.</li>
   <li>Tap the <b>⋮</b> menu, then <b>Install app</b> (or <b>Add to Home screen</b> → <b>Install</b>).</li>
   <li>Open <b>Team</b> from the Home screen. It opens full screen like any other app, and syncs with Home Base and the other phones the same way.</li>
 </ol>
 <p>After you've opened it once, the app works with no internet at the gym. When a new version is posted, a bar at the bottom says <b>New version available</b>; tap <b>Update</b>. Your data stays.</p>
-<p><b>Version numbers</b> (top of the screen) work like v1.2.3: the first number changes for a big release (v2.0 will be the App Store version), the middle one for a new feature, and the last one for a small fix. Home Base on the PC has its own number in the same style.</p>`],
+<p><b>Version numbers</b> (top of the screen) work like v1.2.3: the first number changes for a big release (v2.0 will be the App Store version), the middle one for a new feature, and the last one for a small fix. Home Base on the PC has its own number in the same style. After an update the app shows <b>What's new</b> once; tap the version number any time to see it again.</p>`],
 
 ["setup", "First-time setup", `
 <ol>
@@ -163,7 +163,9 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li>Install Python 3 from python.org. On the first installer screen, tick <b>Add python.exe to PATH</b>.</li>
   <li>Put the <code>vb-home-base</code> folder somewhere permanent, such as Documents.</li>
   <li>Double-click <code>start-home-base.bat</code>. Leave the black window open; your browser opens Home Base at <code>http://localhost:8770</code>.</li>
-  <li>The Dashboard imports files, downloads setup files, and lists recent imports. Reports show season stats (serve, pass, attack, block, set), playing time, match results and the schedule.</li>
+  <li>The Dashboard imports files, downloads setup files, and lists recent imports. The tabs across the top hold the reports: season stats, player cards, match reports, rotations, trends, playing time, results, schedule, work and scouting, each with filters, Excel download and print.</li>
+  <li><b>Updates:</b> the Dashboard says when a new Home Base is available; click <b>Update now</b>. It backs up the database and the old program first, then restarts itself.</li>
+  <li><b>Add a coach:</b> that tab shows a QR code that opens the app on a new coach's phone, the install steps, and a button for the setup file to send them.</li>
 </ol>
 <p><b>Club logo:</b> on the Home Base dashboard, under <b>Club logo</b>, choose the image (PNG or JPG). It goes out in the next <b>setup file</b>, so each phone shows it in the app's header after importing; it also appears on Home Base's pages and at the top of emailed stats. The Home Screen icon is separate: click <b>Download app icon</b>, upload the three files it saves (<code>icon.png</code> for iPhones and iPads, <code>icon-192.png</code> and <code>icon-512.png</code> for Android) into the <code>team</code> folder on GitHub, and each phone re-adds the app to the Home Screen once.</p>
 <p>The master database is <code>volleyball.db</code> in that folder: a normal SQLite file you can open with DB Browser for SQLite. Home Base keeps a copy of every imported file in <code>imports</code> and a daily backup of the database in <code>backups</code>.</p>`],
