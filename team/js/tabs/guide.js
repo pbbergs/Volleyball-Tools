@@ -113,7 +113,7 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li>Tap <b>+ Record work</b>. The date fills in; add the match or court if you like.</li>
   <li>Each player is suggested the job after her last one. With more than 10 players, the extras are <b>Off</b> this time and rotate in next time. The first time, jobs go in jersey order.</li>
   <li>Change any job, or set a player to <b>Absent</b> (she keeps her place for next time). A red note warns if two players have the same job or a job has nobody.</li>
-  <li>Tap <b>Save</b>. The <b>Who did what</b> table shows each player's job every time the team worked, newest first, using short codes: Score, LibTr (Libero tracker), Board (Scoreboard), LJ1A to LJ3B (line judges), Swing, Off, Abs. The key is under the table.</li>
+  <li>Tap <b>Save</b>. The <b>Who did what</b> table shows each player's job every time the team worked, newest first, using short codes: Score, LibTr (Libero tracker), Board (Scoreboard), LJ1A to LJ3B (line judges), Swing, Off, Abs. The key is under the table. Below it, <b>How many times each job</b> counts each player's jobs, Off and Abs, so you can see at a glance who has done what.</li>
 </ol>
 <p>Tap a date at the top of the table to fix or delete that record. Deleting puts the rotation back where it was.</p>`],
 

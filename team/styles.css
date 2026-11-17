@@ -283,3 +283,5 @@ table.matrix td.abs { color: var(--red); font-weight: 600; }
 .confirm.pop { animation: confirmin .5s ease-out; }
 @keyframes confirmin { 0% { transform: scale(1.05); filter: brightness(1.25); } 100% { transform: none; filter: none; } }
 @media (prefers-reduced-motion: reduce) { .res.flash, .btn.flash, .pchip.got, .confirm.pop { animation: none; } }
+table.matrix.counts th { min-width: 40px; }
+table.matrix.counts td.zero { color: var(--muted); font-weight: 500; opacity: .55; }

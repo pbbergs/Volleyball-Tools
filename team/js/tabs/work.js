@@ -120,7 +120,20 @@ export function render(main, ctx) {
       <p class="muted small" style="margin:0"><b>Key:</b> ${ds.map((d, i) => `${DUTY_SHORT[i]} = ${esc(d.name)}`).join(" · ")} · Off = sat out this time · Abs = absent</p>
       <p class="muted small" style="margin:0">Newest first. Tap a date to fix or delete that record.</p>`
       : `<p class="muted">Nothing recorded yet.</p>`}
-    </section>`;
+    </section>
+    ${list.length ? `<section class="card">
+      <h3>How many times each job</h3>
+      <div class="scroll"><table class="matrix counts">
+        <thead><tr><th>Player</th>${DUTY_SHORT.slice(0, ds.length).map(c => `<th>${esc(c)}</th>`).join("")}<th>Off</th><th>Abs</th></tr></thead>
+        <tbody>${entries.map(({ r, p }) => {
+          const mine = list.flatMap(s => s.rows.filter(x => x.player_id === p.id));
+          const n = f => { const v = mine.filter(f).length; return `<td class="${v ? "" : "zero"}">${v}</td>`; };
+          return `<tr><td>#${esc(r.number ?? "")} ${esc(names[p.id])}</td>${ds.map(d => n(w => w.status === "worked" && w.duty_id === d.id)).join("")}` +
+            `${n(w => w.status === "off" || (w.status !== "absent" && !w.duty_id))}${n(w => w.status === "absent")}</tr>`;
+        }).join("")}</tbody>
+      </table></div>
+      <p class="muted small" style="margin:0">Counts every time recorded above. Same codes as the key.</p>
+    </section>` : ""}`;
   $("#rec", main).onclick = () => recordWork(team, ctx);
   for (const b of $$("[data-s]", main)) b.onclick = () => recordWork(team, ctx, list.find(s => s.id === b.dataset.s));
 }
