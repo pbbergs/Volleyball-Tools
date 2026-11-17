@@ -10,6 +10,15 @@ ONE-TIME SETUP
 2. Put this whole vb-home-base folder somewhere permanent, for example Documents\vb-home-base.
    If you use OneDrive, a folder inside OneDrive is fine.
 
+WINDOWS ASKS "DO YOU WANT TO RUN THIS FILE?"
+Windows asks this the first time you open a .bat file that came from the internet. It is safe
+to click Run. To stop the question for good, unblock the files once. In PowerShell:
+
+    Get-ChildItem C:\vb-home-base -Recurse -Include *.bat,*.ps1,*.py | Unblock-File
+
+(or right-click each .bat file > Properties > tick "Unblock" at the bottom > OK).
+Do this again after copying in files you downloaded. Home Base's own "Update now" doesn't need it.
+
 EVERY TIME
 1. Double-click start-home-base.bat. A black window opens; leave it open.
 2. Your browser opens http://localhost:8770 (if not, type that address yourself).

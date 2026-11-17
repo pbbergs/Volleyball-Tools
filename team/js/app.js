@@ -16,6 +16,7 @@ import * as work from "./tabs/work.js";
 import * as links from "./tabs/links.js";
 import * as board from "./tabs/board.js";
 import * as scout from "./tabs/scout.js";
+import * as share from "./tabs/share.js";
 
 // view name -> [render function, bottom tab it belongs to]
 const VIEWS = {
@@ -33,6 +34,7 @@ const VIEWS = {
   guide:    [m => guide.render(m, ctx), "more"],
   board:    [m => board.render(m, ctx), "more"],
   scout:    [m => scout.render(m, ctx), "more"],
+  share:    [m => share.render(m, ctx), "more"],
 };
 
 let view = "serve";
@@ -70,7 +72,7 @@ export const FILES = ["./", "./index.html", "./styles.css", "./icon.png", "./ico
   "./js/app.js", "./js/db.js", "./js/schema.js", "./js/sync.js", "./js/ui.js", "./js/model.js", "./js/match.js", "./js/court.js",
   "./js/tabs/track.js", "./js/tabs/schedule.js", "./js/tabs/team.js", "./js/tabs/stats.js", "./js/tabs/sync.js",
   "./js/tabs/more.js", "./js/tabs/guide.js", "./js/tabs/court.js", "./js/tabs/work.js", "./js/tabs/links.js",
-  "./js/tabs/board.js", "./js/tabs/scout.js"];
+  "./js/tabs/board.js", "./js/tabs/scout.js", "./js/tabs/share.js", "./js/qr.js"];
 const hosted = /^https?:$/.test(location.protocol);
 async function serverVersion() {
   const [a, b] = await Promise.all([

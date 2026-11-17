@@ -12,6 +12,7 @@ const ITEMS = [
   ["guide", "Guide", "How to set up and use the app"],
   ["work", "Work", "Officiating duties and the rotation"],
   ["links", "Links", "Your helpful links"],
+  ["share", "Share the app", "QR code and link to put the app on another coach's phone"],
 ];
 
 export function render(main, ctx) {

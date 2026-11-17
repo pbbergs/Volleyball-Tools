@@ -2,10 +2,11 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.1";
+export const APP_VERSION = "v1.2";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.2", ["More → Share the app: a QR code another coach scans from your screen to get the app, plus a Share link button. Works with no internet."]],
   ["v1.1", ["This note: after each update the app shows what changed, once. Tap the version number at the top to see it again.",
             "Home Base can now update itself, and has an Add a coach page with a QR code that opens this app on a new coach's phone."]],
   ["v1.0.2", ["Wording says \"phone\" instead of \"iPhone\" wherever it applies to both iPhone and Android."]],
