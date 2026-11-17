@@ -9,6 +9,7 @@ import { $, $$, esc, sheet, ask, say, toast, fmtDate, today, numSort, copyTable 
 
 let view = "track";            // "track" | "report" (for the current scouting match) | "list"
 let reportTeam = null;          // a scouted team's season report, from the list
+let lastMsg = "", lastCls = "", flash = null;   // confirmation bar and what to light up after a tap
 
 const teams = () => db.all("scout_teams").sort((a, b) => numSort(a.name, b.name));
 const playersOf = tid => db.where("scout_players", p => p.scout_team_id === tid).sort((a, b) => numSort(a.number, b.number));
@@ -61,7 +62,7 @@ async function newMatch(ctx) {
   if (!r.value) return;
   const t1 = findOrMakeTeam($("#s1", r.el).value.trim()), t2 = findOrMakeTeam($("#s2", r.el).value.trim());
   const m = db.insert("scout_matches", { date: $("#sd", r.el).value || today(), team1_id: t1.id, team2_id: t2.id, location: $("#sl", r.el).value.trim() });
-  db.setLocal("scout_match", m.id); db.setLocal("scout_side", 1); db.setLocal("scout_sel", null);
+  db.setLocal("scout_match", m.id); db.setLocal("scout_side", 1); db.setLocal("scout_sel", null); lastMsg = ""; lastCls = "";
   if (await pickNumbers(t1, "Step 1 of 2.")) await pickNumbers(t2, "Step 2 of 2.");
   view = "track"; ctx.refresh();
 }
@@ -130,7 +131,7 @@ function renderList(main, ctx) {
     ${ts.length ? `<section class="card"><button class="btn danger" type="button" id="clear">Clear old scouting</button>
       <p class="muted small" style="margin:0">Removes every scouted team, number, note and pass, on this device and (after the next sync) in Home Base. For the end of the season.</p></section>` : ""}`;
   $("#new", main).onclick = () => newMatch(ctx);
-  for (const b of $$("[data-m]", main)) b.onclick = () => { db.setLocal("scout_match", b.dataset.m); view = "track"; ctx.refresh(); };
+  for (const b of $$("[data-m]", main)) b.onclick = () => { db.setLocal("scout_match", b.dataset.m); view = "track"; lastMsg = ""; lastCls = ""; ctx.refresh(); };
   for (const b of $$("[data-t]", main)) b.onclick = () => { reportTeam = b.dataset.t; view = "team"; ctx.refresh(); };
   $("#clear", main) && ($("#clear", main).onclick = async () => {
     if (!(await ask("Clear all scouting for the season? Every scouted team, number, note and pass is removed. Export a sync file first if Home Base doesn't have it.", "Clear", true))) return;
@@ -159,7 +160,7 @@ export function render(main, ctx) {
   const title = `${t1?.name || "Team 1"} vs ${t2?.name || "Team 2"}`;
   const head = `<section class="card">
       <div class="card-head"><h2>Scout</h2><span class="muted small">${esc(fmtDate(m.date))}</span><span class="grow"></span>
-        <button class="btn small" type="button" id="all">All scouting</button></div>
+        <button class="btn small primary" type="button" id="done">Done</button></div>
       <b>${esc(title)}</b>
       <div class="seg">${[["track", "Track"], ["report", "Report"]].map(([k, l]) => `<button type="button" data-view="${k}" aria-selected="${k === view}">${l}</button>`).join("")}</div>
     </section>`;
@@ -186,21 +187,22 @@ export function render(main, ctx) {
       </section>
       <section class="card">
         <div class="results">${[["0", "r"], ["1", "o"], ["2", "b"], ["3", "g"]].map(([v, c]) => `<button type="button" class="res ${c}" data-r="${v}">${v}</button>`).join("")}</div>
-        <div class="feedback"><span class="msg" id="fb"></span><button type="button" class="btn small" id="undo">↶ Undo last</button></div>
+        <div class="feedback"><div class="confirm${lastCls ? " c-" + lastCls : ""}" id="fb" role="status">${esc(lastMsg)}</div><button type="button" class="btn small" id="undo">↶ Undo last</button></div>
         <div class="row" style="justify-content:space-between">
           <p class="muted small" style="margin:0">${sp ? `#${esc(sp.number)}: ${selRows.length} pass${selRows.length === 1 ? "" : "es"}${selRows.length ? " · avg " + stat(sp.id) : ""}${sp.comment ? " · " + esc(sp.comment) : ""}` : "Tap a number, then the pass rating."}</p>
           ${sp ? `<button type="button" class="btn small" id="notes">✎ Position &amp; notes</button>` : ""}
         </div>
       </section>`;
-    for (const b of $$("[data-side]", main)) b.onclick = () => { db.setLocal("scout_side", +b.dataset.side); db.setLocal("scout_sel", null); ctx.refresh(); };
+    for (const b of $$("[data-side]", main)) b.onclick = () => { db.setLocal("scout_side", +b.dataset.side); db.setLocal("scout_sel", null); lastMsg = ""; lastCls = ""; ctx.refresh(); };
     for (const b of $$("[data-p]", main)) b.onclick = () => { db.setLocal("scout_sel", b.dataset.p); ctx.refresh(); };
     $("#addnum", main).onclick = () => addNumber(team, ctx);
     $("#notes", main) && ($("#notes", main).onclick = () => editPlayer(sp, ctx));
     for (const b of $$("[data-r]", main)) b.onclick = () => {
       if (!sp) { toast("Tap a number first."); return; }
       db.insert("scout_passes", { match_id: m.id, scout_team_id: team.id, scout_player_id: sp.id, rating: +b.dataset.r, tap: db.uuid() });
-      try { navigator.vibrate?.(30); } catch {}
-      ctx.refresh(); const f = $("#fb"); if (f) { f.textContent = `#${sp.number} (${team.name}): ${b.dataset.r}`; f.classList.add("pop"); }
+      lastMsg = `✓ #${sp.number} (${team.name}): pass ${b.dataset.r}`; lastCls = b.className.match(/\b([gbor])\b/)?.[1] || "b";
+      flash = { r: b.dataset.r, pid: sp.id };
+      ctx.refresh();
     };
     $("#undo", main).onclick = () => {
       const me = db.getLocal("device_name") || db.getLocal("device_id");
@@ -208,9 +210,20 @@ export function render(main, ctx) {
       if (!last) { toast("Nothing to undo."); return; }
       db.remove("scout_passes", last.id);
       const p = db.get("scout_players", last.scout_player_id);
-      ctx.refresh(); const f = $("#fb"); if (f) f.textContent = `Undid #${p?.number ?? "?"}: ${last.rating}`;
+      lastMsg = `↶ Undid #${p?.number ?? "?"}: ${last.rating}`; lastCls = "u"; flash = { undo: true };
+      ctx.refresh();
     };
+    if (flash) {
+      if (flash.r) $(`[data-r="${flash.r}"]`, main)?.classList.add("flash");
+      const c = flash.pid && $(`.pchip[data-p="${CSS.escape(flash.pid)}"]`, main);
+      if (c) { c.classList.add("got"); c.insertAdjacentHTML("beforeend", `<span class="got-badge">✓ ${esc(flash.r)}</span>`); }
+      $("#fb", main)?.classList.add("pop");
+    }
+    flash = null;
   }
   for (const b of $$("[data-view]", main)) b.onclick = () => { view = b.dataset.view; ctx.refresh(); };
-  $("#all", main).onclick = () => { view = "list"; ctx.refresh(); };
+  $("#done", main).onclick = () => {
+    db.setLocal("scout_match", null); db.setLocal("scout_sel", null); lastMsg = ""; lastCls = "";
+    view = "list"; toast(`✓ Scouting saved: ${title}`); ctx.refresh();
+  };
 }

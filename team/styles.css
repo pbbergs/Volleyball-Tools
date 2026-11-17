@@ -258,3 +258,28 @@ table.matrix td.abs { color: var(--red); font-weight: 600; }
 .scout-chips .pchip { flex-direction: column; align-items: center; gap: 0; padding: 8px 4px; text-align: center; }
 .scout-chips .pchip .nm { font-size: 12px; }
 .scout-chips .addnum { justify-content: center; color: var(--accent); border-style: dashed; font-weight: 700; }
+
+/* Tap feedback: the button flashes with a check, the player's chip pulses with a badge, the bar confirms */
+.res { position: relative; overflow: hidden; }
+.mb-btns .btn { position: relative; }
+.res.flash, .btn.flash { animation: tapflash .55s ease-out; }
+.res.flash::after, .btn.flash::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 46px; font-weight: 700; color: #fff; background: rgb(255 255 255 / .38); animation: fadeout .9s ease-out forwards; pointer-events: none; }
+.btn.flash::after { font-size: 26px; border-radius: inherit; }
+@keyframes tapflash { 0% { transform: scale(.9); filter: brightness(1.5); } 55% { transform: scale(1.05); } 100% { transform: none; filter: none; } }
+@keyframes fadeout { 0%, 45% { opacity: 1; } 100% { opacity: 0; } }
+.pchip { position: relative; }
+.pchip.got { animation: chippulse .9s ease-out; border-color: var(--green); }
+@keyframes chippulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 70%, transparent); } 100% { box-shadow: 0 0 0 14px transparent; } }
+.got-badge { position: absolute; top: 3px; right: 4px; background: var(--green); color: #fff; font-size: 12px; font-weight: 700; line-height: 1;
+  padding: 3px 6px; border-radius: 9px; white-space: nowrap; animation: fadeout 1.8s ease-out forwards; pointer-events: none; }
+.confirm { flex: 1; min-width: 0; font-weight: 700; padding: 10px 12px; border-radius: 10px; border-left: 6px solid var(--muted);
+  background: var(--press); line-height: 1.25; }
+.confirm:empty { background: none; border: 0; padding: 0; }
+.confirm.c-g { border-left-color: var(--green); background: color-mix(in srgb, var(--green) 15%, var(--surface)); }
+.confirm.c-b { border-left-color: var(--blue); background: color-mix(in srgb, var(--blue) 15%, var(--surface)); }
+.confirm.c-o { border-left-color: var(--orange); background: color-mix(in srgb, var(--orange) 15%, var(--surface)); }
+.confirm.c-r { border-left-color: var(--red); background: color-mix(in srgb, var(--red) 15%, var(--surface)); }
+.confirm.pop { animation: confirmin .5s ease-out; }
+@keyframes confirmin { 0% { transform: scale(1.05); filter: brightness(1.25); } 100% { transform: none; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .res.flash, .btn.flash, .pchip.got, .confirm.pop { animation: none; } }

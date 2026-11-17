@@ -61,6 +61,8 @@ export async function setMenu(m, ctx) {
 }
 
 // Returns the current match ready for tracking, or renders a message and returns null.
+let ptFlash = null;   // light up the Point button that was just tapped
+
 export function renderBar(main, ctx) {
   const m = model.currentMatch();
   if (!m) {
@@ -102,8 +104,9 @@ export function renderBar(main, ctx) {
     const pt = who => {
       const r = court.record(m, null, "point", who);
       toast(`Point ${who} · ${r.score.us}–${r.score.them}${r.rotated ? " · Side out, rotated" : ""}`);
-      ctx.refresh();
+      ptFlash = who; ctx.refresh();
     };
+    if (ptFlash) { $(`#pt-${ptFlash}`, main)?.classList.add("flash"); ptFlash = null; }
     $("#pt-us", main).onclick = () => pt("us");
     $("#pt-them", main).onclick = () => pt("them");
   }

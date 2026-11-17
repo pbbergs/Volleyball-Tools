@@ -141,12 +141,20 @@ export function serving(m, s) {
 // Record a tap with the court attached. In point-by-point matches with a full lineup:
 // winning a rally while receiving is a side out, so the court rotates (when "rotate automatically" is on);
 // losing one on our serve checks whether the libero should come in for a Middle at position 1.
-export function record(m, pid, skill, result) {
+// `partner`: a second blocker for a shared block (Assist). Both players get the assist (half a block each),
+// the rally is scored for us once, and all of it is one tap, so Undo removes it together.
+export function record(m, pid, skill, result, partner = null) {
   const s = state(m);
   const before = m.scoring === "points" ? serving(m, s) : null;
-  const pos = pid ? posOf(s, pid) || null : null;
-  const r = model.record(m, pid, skill, result, {
-    serving: before, lineup: JSON.stringify(snapshot(s)), rot_no: s.rot, court_pos: pos });
+  const extra = p => ({ serving: before, lineup: JSON.stringify(snapshot(s)), rot_no: s.rot, court_pos: p ? posOf(s, p) || null : null });
+  let r;
+  if (partner) {
+    const tap = db.uuid();
+    const a = model.record(m, pid, skill, result, { ...extra(pid), tap });
+    const b = model.record(m, partner, skill, result, { ...extra(partner), tap });
+    const c = m.scoring === "points" ? model.record(m, null, "point", "us", { ...extra(null), tap }) : null;
+    r = { rows: [...a.rows, ...b.rows, ...(c ? c.rows : [])], point: c ? "us" : null, tap, score: c ? c.score : b.score };
+  } else r = model.record(m, pid, skill, result, extra(pid));
   let rotated = false;
   if (r.point && m.scoring === "points") {
     const s2 = state(m);

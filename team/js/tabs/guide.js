@@ -66,7 +66,8 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
   <li><b>Court</b> (button in the dark match bar, or More → Court): tap a bench player, then a court position, for each of the starting six. See the next section.</li>
   <li><b>Serve tab:</b> the player at position 1 is picked for you when the court is set; otherwise tap the server. Then <b>Ace</b>, <b>In</b> or <b>Out</b>. On Serve, Receive and Attack the players on the court are laid out just like the Court tab (4 3 2 front, 5 6 1 back), with the bench below.</li>
   <li><b>Receive tab:</b> tap the passer (players on the court are listed first), then <b>0</b>–<b>3</b>.</li>
-  <li><b>Attack tab:</b> choose <b>Attack</b>, <b>Block</b> or <b>Set</b> at the top, tap the player, then the result.</li>
+  <li><b>Attack tab:</b> choose <b>Attack</b>, <b>Block</b> or <b>Set</b> at the top, tap the player, then the result. <b>Shared block:</b> on Block, tap both blockers, then <b>Assist</b> once. Each gets an assist (half a block), the point is scored for us, and Undo removes it all together. Tap a selected player again to unselect her. Blockers are cleared after each block.</li>
+  <li><b>Did it count?</b> Every tap flashes the button with a ✓, shows a green badge on the player (for example "✓ Ace"), and a coloured bar under the buttons says what was recorded and the score. If you don't see them, it didn't go in.</li>
   <li><b>Undo last</b> removes the last tap you made on this phone in this match, including a point it scored and a rotation it caused.</li>
   <li><b>Set ▾</b> finishes a set: check or type its score and start the next set, or end the match. Each new set starts with an empty court.</li>
 </ol>
@@ -99,8 +100,9 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
 <ol>
   <li>Tap <b>+ New scouting match</b>. Type Team 1 and Team 2 (teams you've scouted before appear as you type, and come back with their numbers and notes). Add the date and location if you like.</li>
   <li>Tap the numbers you see for Team 1 on the <b>0–99 grid</b>, then <b>Next</b>, then the same for Team 2.</li>
-  <li>Switch teams at the top. Tap a number, then <b>0</b>, <b>1</b>, <b>2</b> or <b>3</b> for her pass. <b>Undo last</b> removes your last rating. <b>+ #</b> adds a number you missed.</li>
+  <li>Switch teams at the top. Tap a number, then <b>0</b>, <b>1</b>, <b>2</b> or <b>3</b> for her pass. <b>Undo last</b> removes your last rating. <b>+ #</b> adds a number you missed. Each rating flashes like the match screens.</li>
   <li><b>✎ Position &amp; notes</b> (after tapping a number) adds her position and a comment such as "hits line" or "tips a lot", before or during the match.</li>
+  <li>Tap <b>Done</b> when the match is over. Every rating is already saved; Done just takes you back to the Scout list. Tap the match there to add more or see its report.</li>
   <li><b>Report</b> shows each team's passers, weakest first, with position and comment. <b>Copy for email</b> copies it.</li>
 </ol>
 <p>From the Scout list, tap a scouted team to see every pass you've rated for them this season. Scouting syncs to Home Base (its <b>Scouting</b> page) and to other coaches like everything else. At the end of the season, <b>Clear old scouting</b> removes all of it.</p>`],
