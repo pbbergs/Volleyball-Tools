@@ -64,15 +64,15 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
     </ul></li>
   <li>In a point-by-point match, answer <b>Who serves first?</b> at the start of each set.</li>
   <li><b>Court</b> (button in the dark match bar, or More → Court): tap a bench player, then a court position, for each of the starting six. See the next section.</li>
-  <li><b>Serve tab:</b> the player at position 1 is picked for you when the court is set; otherwise tap the server. Then <b>Ace</b>, <b>In</b> or <b>Out</b>. On Serve, Receive and Attack the players on the court are laid out just like the Court tab (4 3 2 front, 5 6 1 back), with the bench below.</li>
+  <li><b>Serve tab:</b> the player at position 1 is picked for you when the court is set; otherwise tap the server. Then <b>Ace</b>, <b>In</b> or <b>Out</b>. On Serve, Receive and Net Play the players on the court are laid out just like the Court tab (4 3 2 front, 5 6 1 back), with the bench below.</li>
   <li><b>Receive tab:</b> tap the passer (players on the court are listed first), then <b>0</b>–<b>3</b>.</li>
-  <li><b>Attack tab:</b> choose <b>Attack</b>, <b>Block</b> or <b>Set</b> at the top, tap the player, then the result. <b>Shared block:</b> on Block, tap both blockers, then <b>Assist</b> once. Each gets an assist (half a block), the point is scored for us, and Undo removes it all together. Tap a selected player again to unselect her. Blockers are cleared after each block.</li>
+  <li><b>Net Play tab:</b> choose <b>Attack</b>, <b>Block</b> or <b>Set</b> at the top, tap the player, then the result. <b>Shared block:</b> on Block, tap both blockers, then <b>Assist</b> once. Each gets an assist (half a block), the point is scored for us, and Undo removes it all together. Tap a selected player again to unselect her. Blockers are cleared after each block.</li>
   <li><b>Did it count?</b> Every tap flashes the button with a ✓, shows a green badge on the player (for example "✓ Ace"), and a coloured bar under the buttons says what was recorded and the score. If you don't see them, it didn't go in.</li>
   <li><b>Undo last</b> removes the last tap you made on this phone in this match, including a point it scored and a rotation it caused.</li>
   <li><b>Set ▾</b> finishes a set: check or type its score and start the next set, or end the match. Each new set starts with an empty court.</li>
 </ol>
-<p>The match bar stays at the top of Serve, Receive, Attack and Court, so you can switch between them during play. To fix scores later, open the match on Schedule and tap <b>Set scores</b>. An ended match can be reopened.</p>
-<p><b>Two coaches at one match</b> can both track (for example one on Serve and Receive, one on Attack). Only one of you should run the Court and tap the point buttons.</p>`],
+<p>The match bar stays at the top of Serve, Receive, Net Play and Court, so you can switch between them during play. To fix scores later, open the match on Schedule and tap <b>Set scores</b>. An ended match can be reopened.</p>
+<p><b>Two coaches at one match</b> can both track (for example one on Serve and Receive, one on Net Play). Only one of you should run the Court and tap the point buttons.</p>`],
 
 ["court", "The Court tab", `
 <ul>

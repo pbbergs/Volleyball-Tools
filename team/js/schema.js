@@ -2,7 +2,7 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v2026.11.17a";
+export const APP_VERSION = "v2026.11.17b";
 export const SCHEMA_VERSION = 2;          // bump when a new table is added
 export const SYNC_FORMAT = "vbteam-sync";
 export const SYNC_FORMAT_VERSION = 1;
