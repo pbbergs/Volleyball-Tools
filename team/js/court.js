@@ -205,7 +205,7 @@ export function rotateBack(m, s) {
   const L = s.lineup, R = s.roles;
   s.lineup = { 1: L[6], 2: L[1], 3: L[2], 4: L[3], 5: L[4], 6: L[5] };
   s.roles = { 1: R[6], 2: R[1], 3: R[2], 4: R[3], 5: R[4], 6: R[5] };
-  s.rot = Math.max(0, s.rot - 1);
+  s.rot = s.rot - 1;          // may go below 0, so the wheel colours stay with the players
   s.prompts = [];
   log(m, s, "rotate_back", null, null);
   save(m, s);

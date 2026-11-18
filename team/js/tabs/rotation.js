@@ -4,11 +4,15 @@ import * as model from "../model.js";
 import * as court from "../court.js";
 import { renderBar } from "../match.js";
 import { nameOf, swapText } from "../planui.js";
-import { $, $$, esc, sheet, toast } from "../ui.js";
+import { $, $$, esc, sheet, toast, ask } from "../ui.js";
 
 // Fixed court positions around the wheel, clockwise (the way players rotate): front row on top.
 const ANGLE = { 4: -150, 3: -90, 2: -30, 1: 30, 6: 90, 5: 150 };
-const COLOR = { Setter: "#6d28d9", Pin: "#1f5fbf", Middle: "#16803c", "Right Side": "#c2620a", Libero: "#b91c1c", DS: "#0e7490" };
+// Tracker-card colours. They belong to the spots and turn with the players: when play starts,
+// position 1 (the first server) is red, the front row (4, 3, 2) green, and positions 5 and 6 white.
+const START_COLOR = { 1: "red", 2: "green", 3: "green", 4: "green", 5: "white", 6: "white" };
+const FILL = { red: "#c3262e", green: "#1d7a3e", white: "#eef1f4" };
+export const startPos = (pos, rot) => ((((pos - 1 + rot) % 6) + 6) % 6) + 1;   // where the spot now at `pos` started the set
 const roleOf = (m, pid) => (pid ? model.teamPos(m.team_id, pid) || "" : "");
 const WHEN = { serve: "to serve", after: "after she serves" };
 
@@ -24,13 +28,14 @@ function wheelSvg(m, s, names, srv) {
   for (const pos of [4, 3, 2, 1, 6, 5]) {
     const a = ANGLE[pos], pid = s.lineup[pos], role = pid && model.isLibero(m.team_id, pid) ? "Libero" : roleOf(m, pid);
     const pair = pid ? court.pairFor(s, pid) : null;
-    const col = pid ? COLOR[role] || "#5d6877" : "#c9d1da";
-    const front = [4, 3, 2].includes(pos);
-    out += `<path d="${wedge(C, C + 20, R0, R1, a - 29, a + 29)}" fill="${col}" class="w-slice${front ? "" : " back"}" data-pos="${pos}"/>`;
+    const tone = START_COLOR[startPos(pos, s.rot)];
+    out += `<g class="w-${tone}"><path d="${wedge(C, C + 20, R0, R1, a - 29, a + 29)}" fill="${FILL[tone]}" class="w-slice" data-pos="${pos}"/>`;
     const t = (r, dy = 0) => { const x = C + r * Math.cos((a * Math.PI) / 180), y = C + 20 + r * Math.sin((a * Math.PI) / 180) + dy; return `x="${x.toFixed(1)}" y="${y.toFixed(1)}"`; };
     out += `<text ${t(134, 4)} class="w-pos" text-anchor="middle">${pos}</text>`;
     if (pid) {
-      out += `<text ${t(95, -6)} class="w-name" text-anchor="middle">${esc((names[pid] || "").slice(0, 10))}</text>`;
+      const isSub = pair && pair.back !== court.LIB && pair.back === pid;
+      const mark = role === "Libero" ? "L " : isSub ? "↻ " : "";
+      out += `<text ${t(95, -6)} class="w-name" text-anchor="middle">${esc(mark + (names[pid] || "").slice(0, 10))}</text>`;
       let sub = "";
       if (pair) {
         const isFront = pair.front === pid;
@@ -40,6 +45,7 @@ function wheelSvg(m, s, names, srv) {
       if (pos === 1 && srv === "us") sub = "● serving";
       out += `<text ${t(95, 10)} class="w-sub" text-anchor="middle">${esc(sub.slice(0, 13))}</text>`;
     } else out += `<text ${t(95, 4)} class="w-sub" text-anchor="middle">empty</text>`;
+    out += `</g>`;
   }
   out += `<line x1="${C - R1}" y1="${C + 20}" x2="${C + R1}" y2="${C + 20}" class="w-row"/>`;
   out += `<circle cx="${C}" cy="${C + 20}" r="${R0 - 4}" class="w-hub"/><text x="${C}" y="${C + 16}" class="w-hub-t" text-anchor="middle">Rotation</text>`;
@@ -58,6 +64,10 @@ function checks(m, s) {
     if (p.back !== court.LIB && plan.some(q => q.front === p.back)) warn.push(`${nameOf(m, p.back)} is both a front-row and a back-row player in the plan.`);
     if (!model.rosterRow(m.team_id, p.front) || (p.back !== court.LIB && !model.rosterRow(m.team_id, p.back))) warn.push("A planned player is no longer on this team's roster; edit or remove that swap.");
   }
+  plan.forEach((p, i) => plan.slice(i + 1).forEach(q => {
+    if (p.back !== court.LIB && ((p.front === q.front && p.back === q.back) || (p.front === q.back && p.back === q.front)))
+      warn.push(`${nameOf(m, p.front)} and ${nameOf(m, p.back)} are in two swaps (${p.front === q.front ? "twice" : "once each way round"}). Remove the one that's wrong.`);
+  }));
   const libServes = plan.filter(p => p.back === court.LIB && p.when === "serve").length;
   if (libServes > 1) warn.push("The libero is set to serve for more than one player. She can serve for one at most.");
   if (plan.some(p => p.back === court.LIB) && !model.rosterFor(m.team_id).some(e => model.isLibero(m.team_id, e.p.id)))
@@ -100,7 +110,12 @@ async function editPair(m, ctx, pair, startPid) {
       if (!f || !b) return "Choose both players.";
       if (f === b) return "Choose two different players.";
       const nm = pid => nameOf(m, pid), others = plan.filter(p => !same(p));   // every swap except the one being edited
-      if (others.some(p => p.front === f)) return "That player already has a planned swap; change that one instead.";
+      const pairName = p => `${nm(p.front)} ⇄ ${p.back === court.LIB ? "the libero" : nm(p.back)}`;
+      const dupe = others.find(p => p.front === f && p.back === b), mirror = others.find(p => p.front === b && p.back === f);
+      if (dupe) return `${pairName(dupe)} is already planned. ${pair ? "Tap Remove swap to delete this copy." : "There's nothing to add."}`;
+      if (mirror) return `${pairName(mirror)} is already planned: the same two players the other way round. Keep the one that's right and tap Remove swap on the other.`;
+      const frontIn = others.find(p => p.front === f);
+      if (frontIn) return `${nm(f)} is already the front-row player in ${pairName(frontIn)}. Change or remove that swap instead.`;
       if (others.some(p => p.back === f)) return `${nm(f)} already switches in for another player, so she can't also have a sub of her own.`;
       if (b !== court.LIB) {
         const clash = others.find(p => p.back === b || p.front === b);
@@ -132,13 +147,14 @@ export function render(main, ctx) {
       <div class="card-head"><h2>Rotation</h2><span class="muted">Set ${model.curSet(m)}</span><span class="grow"></span>
         <span class="subs ${s.subs >= court.SUB_LIMIT ? "maxed" : ""}">Subs ${s.subs} of ${court.SUB_LIMIT}</span></div>
       <div class="wheel-wrap">${wheelSvg(m, s, names, srv)}</div>
-      <div class="legend">${Object.entries(COLOR).map(([k, c]) => `<span><i style="background:${c}"></i>${esc(k === "Right Side" ? "Opposite" : k)}</span>`).join("")}</div>
+      <div class="legend"><span><i style="background:${FILL.red}"></i>Started at 1 (first server)</span><span><i style="background:${FILL.green}"></i>Started front row (4, 3, 2)</span>
+        <span><i style="background:${FILL.white}"></i>Started at 5, 6</span><span><b>L</b> libero</span><span><b>↻</b> sub in</span></div>
       <p class="small" style="margin:0"><b>Next Rotate:</b> ${next.swaps.length ? next.swaps.map(w => esc(swapText(m, w))).join("; ") : "no planned subs"}${next.notes.length ? ` <span class="muted">(${esc(next.notes.join(" "))})</span>` : ""}</p>
       <p class="muted small" style="margin:0">Tap a slice to plan who goes in for her. The court is changed on the Court tab or with Rotate.</p>
       <div class="row"><button class="btn" type="button" id="to-court2">Court tab</button><button class="btn primary" type="button" id="rot2" ${court.liberoFront(m, s) ? "disabled" : ""}>Rotate ↻</button></div>
     </section>
     <section class="card">
-      <div class="card-head"><h3>Planned swaps</h3><span class="grow"></span><button class="btn small primary" type="button" id="add">+ Plan a swap</button></div>
+      <div class="card-head"><h3>Planned swaps</h3><span class="grow"></span>${plan.length ? `<button class="btn small" type="button" id="clear-plan">Clear plan</button>` : ""}<button class="btn small primary" type="button" id="add">+ Plan a swap</button></div>
       ${plan.length ? `<div class="list">${plan.map((p, i) => `<button type="button" class="item" data-i="${i}">
           <span class="main-txt"><b>${esc(lab(p.front))} ⇄ ${esc(lab(p.back))}</b>
           <span class="sub">${esc(lab(p.back))} comes in ${esc(WHEN[p.when])}; ${esc(lab(p.front))} returns for the front row</span></span><span class="chev">›</span></button>`).join("")}</div>`
@@ -154,6 +170,10 @@ export function render(main, ctx) {
   };
   for (const b of $$("[data-i]", main)) b.onclick = () => editPair(m, ctx, plan[+b.dataset.i]);
   $("#add", main).onclick = () => editPair(m, ctx, null);
+  $("#clear-plan", main) && ($("#clear-plan", main).onclick = async () => {
+    if (!(await ask(`Remove all ${plan.length} planned swaps for set ${model.curSet(m)}? The players on the court stay where they are.`, "Clear plan", true))) return;
+    court.savePlan(m, court.state(m), []); toast("Plan cleared. Rotate just rotates now."); ctx.refresh();
+  });
   $("#to-court2", main).onclick = () => ctx.go("court");
   $("#rot2", main).onclick = async () => {
     const r = court.rotate(m, court.state(m));

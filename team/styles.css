@@ -322,8 +322,9 @@ body.onboarding .tabbar, body.onboarding .update { display: none; }
 .wheel-wrap { display: grid; place-items: center; }
 .wheel { width: 100%; max-width: 360px; height: auto; display: block; }
 .wheel-wrap { min-width: 0; overflow: hidden; }
-.w-slice { stroke: var(--surface); stroke-width: 3; cursor: pointer; }
-.w-slice.back { opacity: .82; }
+.w-slice { stroke: #ffffff; stroke-width: 4; cursor: pointer; }
+.w-white .w-slice { stroke: #c9d1da; stroke-width: 2; }
+.wheel .w-white text { fill: #17202b; }
 .w-slice:active { opacity: .6; }
 .wheel text { pointer-events: none; fill: #fff; font-family: var(--font-body); }
 .w-name { font-weight: 700; font-size: 15px; }

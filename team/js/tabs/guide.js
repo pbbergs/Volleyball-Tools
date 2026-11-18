@@ -120,7 +120,7 @@ First3,Last3,3,Libero,12,12U Blue</pre>
 <p>From the Scout list, tap a scouted team to see every pass you've rated for them this season. Scouting syncs to Home Base (its <b>Scouting</b> page) and to other coaches like everything else. At the end of the season, <b>Clear old scouting</b> removes all of it.</p>`],
 
 ["rotation", "Rotation wheel and substitution plan (trial)", `
-<p>More → <b>Rotation</b> (or <b>Wheel</b> in the dark match bar) shows the court as a wheel: the six positions around the circle, front row on top, each slice coloured by the player's position (Setter, Pin, Middle, Opposite, Libero, DS). Players move clockwise around it as you rotate. The middle shows which rotation you're in (1 = the set's starting lineup).</p>
+<p>More → <b>Rotation</b> (or <b>Wheel</b> in the dark match bar) shows the court as a wheel: the six positions around the circle, front row on top, coloured like a tracker card: when play starts, position 1 (the first server) is <b>red</b>, the front row (4, 3, 2) <b>green</b>, and positions 5 and 6 <b>white</b>. The colours turn with the players as you rotate, so the red slice always shows where the set started. <b>L</b> marks the libero and <b>↻</b> a sub. A <b>Clear plan</b> button removes all planned swaps for the set. The middle shows which rotation you're in (1 = the set's starting lineup).</p>
 <ol>
   <li>Set the starting six on the <b>Court</b> tab as usual.</li>
   <li>On <b>Rotation</b>, tap a slice (or <b>+ Plan a swap</b>): choose the <b>front-row player</b>, who <b>replaces her in the back row</b> (a bench player or the libero), and <b>when</b>:
