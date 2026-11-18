@@ -1,5 +1,6 @@
 // The match bar shown above Serve, Receive and Attack: current match, set, score, and set controls.
 
+import { showSwaps } from "./planui.js";
 import * as db from "./db.js";
 import * as model from "./model.js";
 import * as court from "./court.js";
@@ -90,6 +91,7 @@ export function renderBar(main, ctx) {
     <div class="mb-top">
       <div class="mb-name">${esc(label(m))}<div class="mb-sub">${esc(when(m))} · Set ${n}${res.w || res.l ? ` · Sets ${res.w}–${res.l}` : ""}${srv ? ` · ${srv === "us" ? "We serve" : "They serve"}` : ""}</div></div>
       ${pts ? `<div class="mb-score" aria-label="Score">${sc.us}–${sc.them}</div>` : ""}
+      <button class="btn small mb-board" type="button" id="to-wheel"${ctx.view === "rotation" ? " aria-current=\"true\"" : ""}>Wheel</button>
       <button class="btn small mb-board" type="button" id="to-board"${ctx.view === "board" ? " aria-current=\"true\"" : ""}>Board</button>
     </div>
     ${askFirst ? `<div class="mb-first"><span>Who serves first in set ${n}?</span>
@@ -105,6 +107,7 @@ export function renderBar(main, ctx) {
       const r = court.record(m, null, "point", who);
       toast(`Point ${who} · ${r.score.us}–${r.score.them}${r.rotated ? " · Side out, rotated" : ""}`);
       ptFlash = who; ctx.refresh();
+      showSwaps(m, r, ctx, r.rotated ? "Side out" : "Lost the serve");
     };
     if (ptFlash) { $(`#pt-${ptFlash}`, main)?.classList.add("flash"); ptFlash = null; }
     $("#pt-us", main).onclick = () => pt("us");
@@ -113,6 +116,7 @@ export function renderBar(main, ctx) {
   for (const b of main.querySelectorAll("[data-first]")) b.onclick = () => { court.setFirstServe(m, b.dataset.first); ctx.refresh(); };
   $("#to-court", main).onclick = () => ctx.go("court");
   $("#to-board", main).onclick = () => ctx.go(ctx.view === "board" ? "serve" : "board");
+  $("#to-wheel", main).onclick = () => ctx.go(ctx.view === "rotation" ? "court" : "rotation");
   $("#set-menu", main).onclick = () => setMenu(m, ctx);
   return m;
 }

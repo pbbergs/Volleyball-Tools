@@ -4,6 +4,7 @@ import * as db from "../db.js";
 import * as model from "../model.js";
 import * as court from "../court.js";
 import { renderBar } from "../match.js";
+import { showSwaps } from "../planui.js";
 import { $, $$, esc, say, toast } from "../ui.js";
 
 let armed = null;     // bench player waiting to be placed
@@ -65,6 +66,7 @@ export function render(main, ctx) {
         <button class="btn o2" type="button" id="off" ${selPos ? "" : "disabled"}>Take off court</button>
         <button class="btn o3" type="button" id="und" ${s.hist.length ? "" : "disabled"}>Undo lineup change</button>
       </div>
+      <button class="btn plan-link" type="button" id="to-plan">${court.planOf(s).length ? `Rotation plan: ${court.planOf(s).length} swap${court.planOf(s).length > 1 ? "s" : ""} ›` : "Plan who goes in for who ›"}</button>
     </section>
     <section class="card">
       <div class="card-head"><h3>Bench</h3><span class="muted small">${armed ? "Now tap a court position" : "Tap a player, then a position"}</span></div>
@@ -97,7 +99,8 @@ export function render(main, ctx) {
     }
     armed = armed === pid ? null : pid; go();
   };
-  $("#rot", main).onclick = () => { const r = court.rotate(m, s); if (r.error) say(r.error); selPos = null; go(); };
+  $("#rot", main).onclick = () => { const r = court.rotate(m, s); if (r.error) say(r.error); selPos = null; go(); if (!r.error) showSwaps(m, r, ctx); };
+  $("#to-plan", main).onclick = () => ctx.go("rotation");
   $("#rotb", main).onclick = () => { court.rotateBack(m, s); selPos = null; go(); };
   $("#off", main).onclick = () => { if (selPos) court.takeOff(m, s, selPos); selPos = null; go(); };
   $("#und", main).onclick = () => { court.undoLineup(m, s); armed = null; selPos = null; go(); };

@@ -119,6 +119,17 @@ Zoe,Lee,3,Libero,12,12U Blue</pre>
 </ol>
 <p>From the Scout list, tap a scouted team to see every pass you've rated for them this season. Scouting syncs to Home Base (its <b>Scouting</b> page) and to other coaches like everything else. At the end of the season, <b>Clear old scouting</b> removes all of it.</p>`],
 
+["rotation", "Rotation wheel and substitution plan (trial)", `
+<p>More → <b>Rotation</b> (or <b>Wheel</b> in the dark match bar) shows the court as a wheel: the six positions around the circle, front row on top, each slice coloured by the player's position (Setter, Pin, Middle, Opposite, Libero, DS). Players move clockwise around it as you rotate. The middle shows which rotation you're in (1 = the set's starting lineup).</p>
+<ol>
+  <li>Set the starting six on the <b>Court</b> tab as usual.</li>
+  <li>On <b>Rotation</b>, tap a slice (or <b>+ Plan a swap</b>): choose the <b>front-row player</b>, who <b>replaces her in the back row</b> (a bench player or the libero), and <b>when</b>:
+    <b>To serve</b> (as her spot rotates to position 1, so the sub serves) or <b>After she serves</b> (she serves; the sub comes in when we lose her serve).</li>
+  <li>The front-row player comes back automatically when her spot rotates to the front row (position 4). The libero always leaves before the front row.</li>
+  <li>From then on, <b>Rotate</b>, side outs and losing the serve make those subs for you and show what happened, with <b>OK</b> or <b>Undo these subs</b>.</li>
+</ol>
+<p><b>The libero doesn't serve</b> unless you choose "To serve" for her (for one player at most). Libero swaps don't count toward the 15 substitutions; others do, and planned subs are skipped once all 15 are used. Each new set starts with the same plan. Subs you make by hand are respected: a planned swap is skipped if a player isn't where the plan expects. <b>Next Rotate</b> under the wheel shows what the next Rotate will do.</p>`],
+
 ["work", "Work rotation", `
 <p>When your team works as officials (score keeper, libero tracker, scoreboard, line judges, swing helper), More → <b>Work</b> keeps the jobs fair.</p>
 <ol>

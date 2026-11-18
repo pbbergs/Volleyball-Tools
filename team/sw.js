@@ -1,12 +1,12 @@
 // Offline support. Always tries the network first (so updates show up right away when online)
 // and falls back to the saved copy when there's no connection at the gym.
-const CACHE = "vbteam-v13";
+const CACHE = "vbteam-v14";
 const FILES = [
   "./", "./index.html", "./styles.css", "./icon.png", "./icon-192.png", "./icon-512.png", "./manifest.webmanifest",
   "./js/app.js", "./js/db.js", "./js/schema.js", "./js/sync.js", "./js/ui.js", "./js/model.js", "./js/match.js", "./js/court.js",
   "./js/tabs/track.js", "./js/tabs/schedule.js", "./js/tabs/team.js", "./js/tabs/stats.js",
   "./js/tabs/sync.js", "./js/tabs/more.js", "./js/tabs/guide.js", "./js/tabs/court.js", "./js/tabs/work.js", "./js/tabs/links.js",
-  "./js/tabs/board.js", "./js/tabs/scout.js", "./js/tabs/share.js", "./js/qr.js", "./js/tabs/about.js", "./js/welcome.js", "./js/terms.js",
+  "./js/tabs/board.js", "./js/tabs/scout.js", "./js/tabs/share.js", "./js/qr.js", "./js/tabs/about.js", "./js/welcome.js", "./js/terms.js", "./js/tabs/rotation.js", "./js/planui.js",
 ];
 
 self.addEventListener("install", e => {

@@ -4,6 +4,7 @@ import { $$, esc } from "../ui.js";
 
 const ITEMS = [
   ["court", "Court", "Lineup, rotation, substitutions and the libero"],
+  ["rotation", "Rotation", "The wheel, and the plan for who goes in for who"],
   ["board", "Board", "Match day: who's serving, passing and hitting well, weakest first"],
   ["scout", "Scout", "Rate other teams' passers to find who to serve at"],
   ["team", "Team", "Teams, coaches, club players and this team's roster"],

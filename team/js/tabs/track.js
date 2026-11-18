@@ -4,6 +4,7 @@ import * as db from "../db.js";
 import * as model from "../model.js";
 import * as court from "../court.js";
 import { renderBar, chooseScoring } from "../match.js";
+import { showSwaps } from "../planui.js";
 import { $, $$, esc, toast } from "../ui.js";
 
 const BUTTONS = {
@@ -119,6 +120,7 @@ function trackCard(main, ctx, m, skill, heading) {
     flash = { skill, r: res, pids: e2 ? [sel, sel2] : [sel], badge: "✓ " + (SHORT[res] || res) };
     if (skill === "block") { db.setLocal(key, null); db.setLocal("sel_block2", null); }   // pick the blockers fresh each time
     ctx.refresh();
+    showSwaps(db.get("matches", m.id), r, ctx, r.rotated ? "Side out" : "Lost the serve");
   };
   $("#undo", main).onclick = () => {
     const rows = court.undo(db.get("matches", m.id));

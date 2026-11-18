@@ -15,11 +15,16 @@ const key = (m, set) => `court:${m.id}:${set ?? model.curSet(m)}`;
 
 function blank() {
   return { lineup: { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null }, roles: { ...DEFAULT_ROLES },
-           subs: 0, rot: 0, hist: [], prompts: [], first: null, auto: true };
+           subs: 0, rot: 0, hist: [], prompts: [], first: null, auto: true, plan: [], libFor: null };
 }
+// A new set starts with an empty court but keeps the previous set's rotation plan.
 export function state(m, set) {
-  const s = db.getLocal(key(m, set));
-  return s ? { ...blank(), ...JSON.parse(JSON.stringify(s)) } : blank();
+  const n = set ?? model.curSet(m);
+  const s = db.getLocal(key(m, n));
+  if (s) return { ...blank(), ...JSON.parse(JSON.stringify(s)) };
+  const b = blank(), prev = n > 1 ? db.getLocal(key(m, n - 1)) : null;
+  if (prev?.plan?.length) b.plan = JSON.parse(JSON.stringify(prev.plan));
+  return b;
 }
 export const save = (m, s) => db.setLocal(key(m), s);
 
@@ -38,7 +43,7 @@ export function dispRole(m, s, pos) {
 }
 
 function remember(s, tap = null) {
-  s.hist.push({ lineup: { ...s.lineup }, roles: { ...s.roles }, subs: s.subs, rot: s.rot, tap });
+  s.hist.push({ lineup: { ...s.lineup }, roles: { ...s.roles }, subs: s.subs, rot: s.rot, libFor: s.libFor, tap });
   if (s.hist.length > 30) s.hist.shift();
 }
 function log(m, s, event, pos, pid, tap = null) {
@@ -47,6 +52,65 @@ function log(m, s, event, pos, pid, tap = null) {
     us: sc.us, them: sc.them, lineup: JSON.stringify(snapshot(s)), rot_no: s.rot, subs: s.subs, tap });
 }
 const benchLibero = (m, s) => model.rosterFor(m.team_id).map(x => x.p.id).find(id => !onCourt(s).has(id) && model.isLibero(m.team_id, id)) || null;
+
+// ---------- rotation plan ----------
+// s.plan = [{ front, back, when }]: `front` plays the front row; `back` ("L" = the libero) replaces her in the back row.
+// when = "serve": the back-row player comes in as the spot rotates 2 -> 1, and serves.
+// when = "after": the front-row player serves; the back-row player comes in when we lose that serve.
+// The front-row player always comes back as the spot rotates 5 -> 4 (the libero must leave the front row).
+export const LIB = "L";
+export const planOf = s => s.plan || [];
+export const pairFor = (s, pid) => planOf(s).find(p => p.front === pid || p.back === pid) || null;
+
+// trigger: "toBack" (spot just reached 1 from 2), "toFront" (just reached 4 from 5), "lostServe" (we lost the serve; spot at 1),
+// "after6" (spot just reached 6 and her "after she serves" swap hasn't happened, e.g. in matches scored by set only).
+// Changes s in place; returns [{ pos, inPid, outPid, counted }] and notes for anything that couldn't happen. dry = preview only.
+function applyPlan(m, s, triggers, tap, dry = false) {
+  const swaps = [], notes = [], plan = planOf(s);
+  if (!plan.length) return { swaps, notes };
+  const isL = pid => model.isLibero(m.team_id, pid);
+  for (const [pos, trig] of triggers) {
+    const out = s.lineup[pos];
+    if (!out) continue;
+    let pair = null, inc = null;
+    if (trig === "toFront") {
+      pair = isL(out) ? plan.find(p => p.back === LIB && p.front === s.libFor) || plan.find(p => p.back === LIB && !onCourt(s).has(p.front))
+                      : plan.find(p => p.back === out);
+      inc = pair?.front;
+    } else {
+      pair = plan.find(p => p.front === out && p.when === (trig === "toBack" ? "serve" : "after"));   // "lostServe" or "after6"
+      if (pair) inc = pair.back === LIB ? benchLibero(m, s) : pair.back;
+      if (pair && pair.back === LIB && !inc) { notes.push("The libero is already on the court, so she can't come in at position " + pos + "."); continue; }
+    }
+    if (!pair || !inc) continue;
+    if (onCourt(s).has(inc)) { notes.push(`#${model.rosterRow(m.team_id, inc)?.number ?? ""} is already on the court, so the planned swap at position ${pos} was skipped.`); continue; }
+    const counted = !isL(inc) && !isL(out);
+    if (counted && s.subs >= SUB_LIMIT) { notes.push(`All ${SUB_LIMIT} substitutions are used, so the planned swap at position ${pos} was skipped.`); continue; }
+    s.lineup[pos] = inc;
+    if (counted) s.subs++;
+    if (isL(inc)) s.libFor = out;
+    if (isL(out)) s.libFor = null;
+    if (!dry) log(m, s, counted ? "sub" : "libero", pos, inc, tap);
+    swaps.push({ pos, inPid: inc, outPid: out, counted });
+  }
+  return { swaps, notes };
+}
+
+// What the next Rotate would do (for the Rotation tab), without changing anything.
+export function previewRotate(m, s) {
+  const c = JSON.parse(JSON.stringify(s)), L = c.lineup;
+  c.lineup = { 1: L[2], 2: L[3], 3: L[4], 4: L[5], 5: L[6], 6: L[1] };
+  return applyPlan(m, c, [[1, "toBack"], [4, "toFront"], [6, "after6"]], null, true);
+}
+function planned(s, pid) { return !!pairFor(s, pid); }
+// The planned subs that just happened become their own step, so "Undo" on the popup reverses only them.
+function planStep(m, s, triggers, tap) {
+  remember(s, tap);
+  const r = applyPlan(m, s, triggers, tap);
+  if (!r.swaps.length) s.hist.pop();
+  return r;
+}
+export function savePlan(m, s, plan) { s.plan = plan; save(m, s); }
 
 // Libero in the front row: Rotate stays off until she's out.
 export function liberoFront(m, s) {
@@ -88,12 +152,14 @@ export function rotate(m, s, tap = null) {
   s.lineup = { 1: L[2], 2: L[3], 3: L[4], 4: L[5], 5: L[6], 6: L[1] };
   s.roles = { 1: R[2], 2: R[3], 3: R[4], 4: R[5], 5: R[6], 6: R[1] };
   s.rot++;
+  log(m, s, "rotate", null, null, tap);
+  const plan = planStep(m, s, [[1, "toBack"], [4, "toFront"], [6, "after6"]], tap);
   // Prompts for players who just crossed rows: 2 -> 1 (front to back) and 5 -> 4 (back to front).
   const prompts = [];
   if (s.subs < SUB_LIMIT || benchLibero(m, s)) {
     for (const [pos, dir] of [[1, "from the front row to the back row"], [4, "from the back row to the front row"]]) {
       const pid = s.lineup[pos];
-      if (!pid || model.isLibero(m.team_id, pid)) continue;
+      if (!pid || model.isLibero(m.team_id, pid) || planned(s, pid)) continue;   // the plan takes care of her
       const rr = model.rosterRow(m.team_id, pid);
       if (pos === 1 && model.teamPos(m.team_id, pid) === "Middle" && benchLibero(m, s)) {
         prompts.unshift({ type: "libero", pos, pid, lib: benchLibero(m, s) });
@@ -101,9 +167,8 @@ export function rotate(m, s, tap = null) {
     }
   }
   s.prompts = prompts;
-  log(m, s, "rotate", null, null, tap);
   save(m, s);
-  return { ok: true };
+  return { ok: true, swaps: plan.swaps, notes: plan.notes };
 }
 
 // Counterclockwise, one spot back: 1->2, 2->3, 3->4, 4->5, 5->6, 6->1. For fixing a lineup that got ahead;
@@ -123,7 +188,7 @@ export function rotateBack(m, s) {
 export function undoLineup(m, s) {
   const h = s.hist.pop();
   if (!h) return false;
-  Object.assign(s, { lineup: h.lineup, roles: h.roles, subs: h.subs, rot: h.rot, prompts: [] });
+  Object.assign(s, { lineup: h.lineup, roles: h.roles, subs: h.subs, rot: h.rot, libFor: h.libFor ?? null, prompts: [] });
   log(m, s, "undo", null, null);
   save(m, s);
   return true;
@@ -155,24 +220,28 @@ export function record(m, pid, skill, result, partner = null) {
     const c = m.scoring === "points" ? model.record(m, null, "point", "us", { ...extra(null), tap }) : null;
     r = { rows: [...a.rows, ...b.rows, ...(c ? c.rows : [])], point: c ? "us" : null, tap, score: c ? c.score : b.score };
   } else r = model.record(m, pid, skill, result, extra(pid));
-  let rotated = false;
+  let rotated = false, swaps = [], notes = [];
   if (r.point && m.scoring === "points") {
     const s2 = state(m);
-    if (r.point === "us" && before === "them" && s2.auto && full(s2) && !liberoFront(m, s2)) { rotated = !rotate(m, s2, r.tap).error; }
-    else if (r.point === "them" && before === "us" && full(s2) && model.teamPos(m.team_id, s2.lineup[1]) === "Middle" && benchLibero(m, s2)) {
-      s2.prompts = [{ type: "libero", pos: 1, pid: s2.lineup[1], lib: benchLibero(m, s2) }, ...s2.prompts.filter(p => p.type !== "libero")];
+    if (r.point === "us" && before === "them" && s2.auto && full(s2) && !liberoFront(m, s2)) {
+      const rr = rotate(m, s2, r.tap); rotated = !rr.error; swaps = rr.swaps || []; notes = rr.notes || [];
+    } else if (r.point === "them" && before === "us" && full(s2)) {
+      const pp = planStep(m, s2, [[1, "lostServe"]], r.tap);     // e.g. the libero comes in after the Middle serves
+      swaps = pp.swaps; notes = pp.notes;
+      if (!swaps.length && !planned(s2, s2.lineup[1]) && model.teamPos(m.team_id, s2.lineup[1]) === "Middle" && benchLibero(m, s2))
+        s2.prompts = [{ type: "libero", pos: 1, pid: s2.lineup[1], lib: benchLibero(m, s2) }, ...s2.prompts.filter(p => p.type !== "libero")];
       save(m, s2);
     }
   }
-  return { ...r, rotated, sideOut: r.point === "us" && before === "them" };
+  return { ...r, rotated, swaps, notes, sideOut: r.point === "us" && before === "them" };
 }
 
 // Undo the last tap; if that tap rotated the court, rotate it back too.
 export function undo(m) {
   const rows = model.undoLast(m);
   if (!rows) return null;
-  const s = state(m), top = s.hist[s.hist.length - 1];
-  if (top && top.tap && top.tap === rows[0].tap) undoLineup(m, s);
+  const s = state(m), tap = rows[0].tap;
+  while (s.hist.length && s.hist[s.hist.length - 1].tap && s.hist[s.hist.length - 1].tap === tap) undoLineup(m, s);   // planned subs, then the rotation
   return rows;
 }
 

@@ -2,10 +2,12 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.3";
+export const APP_VERSION = "v1.4";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.4", ["Try it: the Rotation wheel (More → Rotation, or Wheel in the match bar) shows who is where, colour-coded by position.",
+            "Plan who goes in for who and when: Rotate (and side outs) then make those subs for you, with OK / Undo. The libero only serves if you choose that."]],
   ["v1.3", ["New coaches get a proper welcome: what the app does, how and why to install it on the Home Screen, and the terms of use.",
             "Volleyball Tools is now free and open source (MIT License). Read the terms any time in More → About & terms."]],
   ["v1.2", ["More → Share the app: a QR code another coach scans from your screen to get the app, plus a Share link button. Works with no internet."]],
