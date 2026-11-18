@@ -2,10 +2,12 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.2";
+export const APP_VERSION = "v1.3";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.3", ["New coaches get a proper welcome: what the app does, how and why to install it on the Home Screen, and the terms of use.",
+            "Volleyball Tools is now free and open source (MIT License). Read the terms any time in More → About & terms."]],
   ["v1.2", ["More → Share the app: a QR code another coach scans from your screen to get the app, plus a Share link button. Works with no internet."]],
   ["v1.1", ["This note: after each update the app shows what changed, once. Tap the version number at the top to see it again.",
             "Home Base can now update itself, and has an Add a coach page with a QR code that opens this app on a new coach's phone."]],

@@ -28,7 +28,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, quote
 
-VERSION = "1.1"
+VERSION = "1.2"
 PORT = 8770
 HERE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(HERE, "volleyball.db")
@@ -62,6 +62,11 @@ SETUP_TABLES = ["teams", "staff", "players", "roster", "matches", "sets", "dutie
                 "scout_teams", "scout_players", "scout_matches", "scout_passes"]
 DUTY_NAMES = ["Score keeper", "Libero tracker", "Scoreboard", "Line Judge 1A", "Line Judge 1B", "Line Judge 2A",
               "Line Judge 2B", "Line Judge 3A", "Line Judge 3B", "Swing Helper"]
+# --- TERMS (generated from terms-source.py) ---
+TERMS_VERSION = '2026-11-18'
+TERMS_SUMMARY = ['Free and open source, provided as is, with no warranty of any kind.', "The authors aren't responsible for lost data, wrong stats, or decisions made with the app (lineups, playing time, tryouts and so on).", 'Your team data stays with you: on your phone and your own PC. Nothing is sent to the authors or anyone else. It only moves when you send a file.', "You're responsible for your own backups (Export or Home Base) and for keeping your phone and files secure.", "You have permission from your club and the players' parents or guardians to record players' information, and you'll follow your club and league rules.", 'Not affiliated with any league, club or governing body. Minnesota law applies.']
+TERMS_HTML = '<h3>1. What this is</h3><p>Volleyball Tools (the Team app, Home Base and the Volleyball Tools web pages) is free, open-source software made by the Volleyball Tools contributors for volleyball coaches. The source code is published under the MIT License.</p><h3>2. Agreeing to these terms</h3><p>By installing or using Volleyball Tools you agree to these terms. If you don&#x27;t agree, don&#x27;t use it.</p><h3>3. Provided as is</h3><p>Volleyball Tools is provided &quot;as is&quot; and &quot;as available&quot;, without warranty of any kind, express or implied, including any warranty of accuracy, fitness for a particular purpose, or that it will work without errors or interruptions.</p><p>Statistics, playing time, rotations and other results depend on what is entered and may be incomplete or wrong. Check anything important yourself.</p><h3>4. No responsibility for loss or decisions</h3><p>To the fullest extent permitted by law, the Volleyball Tools contributors are not liable for any damages or losses of any kind arising from using or not being able to use Volleyball Tools. This includes lost or damaged data, incorrect statistics, and any decision made with its help, such as lineups, substitutions, playing time, tryouts, team placement or recruiting, and any dispute about them.</p><h3>5. Your data stays with you</h3><p>Everything you enter is stored only on your own devices: in the app on each phone or browser, and in Home Base&#x27;s database on your own PC. It is not sent to the Volleyball Tools contributors or to anyone else.</p><p>Data only moves when you choose to send a sync or setup file to someone. You decide who receives your files.</p><p>Removing the app, clearing your browser&#x27;s data, or losing your phone can delete your data. You are responsible for your own backups (More → Sync → Export, or Home Base) and for keeping your devices and files secure.</p><h3>6. Players&#x27; information</h3><p>The app can hold players&#x27; names, numbers, ages and statistics, and many players are minors. By using it you confirm that you have any permission required from your club and from players&#x27; parents or guardians to record this information, and that you will follow your club&#x27;s, league&#x27;s and school&#x27;s policies and the law.</p><p>Use the information only for coaching your team, share files only with people who need them, and delete information you no longer need. Never post sync or setup files anywhere public.</p><p>When scouting other teams, record players by number only, not by name.</p><h3>7. The web site</h3><p>The app and these pages are served by GitHub Pages, and the app loads its fonts from Google Fonts. Like any web site, those services may see your device&#x27;s internet address when pages load; their own terms and privacy policies apply. No team data is ever sent to them.</p><h3>8. Not affiliated</h3><p>Volleyball Tools is not affiliated with, endorsed by or sponsored by any league, club, school or governing body, or by Apple or Google.</p><h3>9. Changes</h3><p>These terms may be updated. When they change, the app asks you to review them again. Continuing to use Volleyball Tools after a change means you accept the updated terms.</p><h3>10. Governing law</h3><p>These terms are governed by the laws of the State of Minnesota, USA. If any part of them can&#x27;t be enforced, the rest still applies.</p><h3>11. Open-source license</h3><p>The software itself is licensed under the MIT License (Copyright (c) 2026 The Volleyball Tools contributors), which also says it is provided as is, without warranty, and that the authors are not liable for any claim or damages. The license is in the LICENSE.md file of the source code.</p>'
+# --- END TERMS ---
 NAME_OK = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,62}$")
 
 VIEWS = {
@@ -384,6 +389,8 @@ table.work td,table.work th{text-align:center}table.work td:nth-child(2),table.w
 .hb-track{height:16px;background:#eef1f4;border-radius:8px;overflow:hidden}.hb-fill{height:100%;border-radius:8px}
 .hb-fill.red{background:#b91c1c}.hb-fill.amber{background:#c2620a}.hb-fill.green{background:#16803c}.hb b{text-align:right}
 
+.foot{text-align:center;font-size:13px;color:#5d6877;padding:8px 0}.terms-card{border:2px solid #1a6fb5}.terms-card form{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.terms h3{margin:14px 0 2px;font-size:16px}.terms p{margin:4px 0}
 .coach{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:start}.qr{text-align:center}.qr svg{width:240px;height:auto;display:block}
 .coach ol{display:grid;gap:8px;padding-left:22px}@media (max-width:700px){.coach{grid-template-columns:1fr}}
 @media print{body{background:#fff}header nav,.noprint,.filters{display:none}header{background:#fff;color:#17202b;padding:0 0 8px}
@@ -419,14 +426,59 @@ NAV = [("/", "Dashboard"), ("/report/season", "Season stats"), ("/report/players
        ("/report/scouting", "Scouting"), ("/report/links", "Links"), ("/coach", "Add a coach")]
 
 
+def terms_agreed():
+    try:
+        conn = connect()
+        r = conn.execute("SELECT v FROM _meta WHERE k = 'terms_version'").fetchone()
+        conn.close()
+        return bool(r) and r[0] == TERMS_VERSION
+    except sqlite3.Error:
+        return False
+
+
+def agree_terms():
+    conn = connect()
+    with conn:
+        conn.execute("INSERT OR REPLACE INTO _meta VALUES ('terms_version', ?)", (TERMS_VERSION,))
+        conn.execute("INSERT OR REPLACE INTO _meta VALUES ('terms_at', ?)", (now_iso(),))
+    conn.close()
+
+
+TERMS_CARD = """<section class='card terms-card noprint'><h2>%s</h2>
+  <p>Volleyball Tools is free and open source. Please read these points before using Home Base:</p><ul>%s</ul>
+  <p><a href='/terms'>Read the full terms</a></p>
+  <form method='post' action='/api/terms'><label><input type='checkbox' required> I have read and agree to the terms of use.</label>
+  <button class='btn'>I agree</button></form></section>"""
+
+
+def terms_page():
+    conn = connect()
+    r = conn.execute("SELECT v FROM _meta WHERE k = 'terms_at'").fetchone()
+    conn.close()
+    status = ("<p class='ok'>You agreed on %s.</p>" % html.escape(fmt_date((r[0] or "")[:10]))) if terms_agreed() and r else ""
+    body = ("<section class='card'><h2>Terms of use</h2><p class='muted'>Version %s. Free and open source under the MIT License, "
+            "made by the Volleyball Tools contributors. <a href='https://github.com/pbbergs/Volleyball-Tools'>Source code</a></p>%s"
+            "<h3>In short</h3><ul>%s</ul></section><section class='card terms'>%s</section>") % (
+        html.escape(TERMS_VERSION), status, "".join("<li>%s</li>" % html.escape(x) for x in TERMS_SUMMARY), TERMS_HTML)
+    return page("Terms of use", body, "/terms")
+
+
 def page(title, body, active=None):
     logo = get_logo()
     img = ("<img src='%s' alt='' class='logo'>" % logo) if logo else ""
     nav = "".join("<a href='%s'%s>%s</a>" % (h, " class='on'" if h == active else "", n) for h, n in NAV)
+    card = ""
+    if active != "/terms" and not terms_agreed():   # shown on every page until agreed (and again if the terms change)
+        try:
+            conn = connect(); old = conn.execute("SELECT v FROM _meta WHERE k = 'terms_version'").fetchone(); conn.close()
+        except sqlite3.Error:
+            old = None
+        card = TERMS_CARD % ("Updated terms: please review" if old else "Terms of use", "".join("<li>%s</li>" % html.escape(x) for x in TERMS_SUMMARY))
     return ("<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>"
             "<title>%s</title><style>%s</style></head><body>"
             "<header><div class='hd'>%s<h1>Volleyball Home Base <span class='hv'>v%s</span></h1></div><nav>%s</nav></header>"
-            "<main>%s</main></body></html>" % (html.escape(title), CSS, img, html.escape(VERSION), nav, body))
+            "<main>%s%s<footer class='foot noprint'>Free and open source (MIT License) &middot; <a href='/terms'>Terms of use</a></footer></main></body></html>"
+            % (html.escape(title), CSS, img, html.escape(VERSION), nav, card, body))
 
 
 def table_html(rows, cols=None):
@@ -1501,6 +1553,8 @@ class Handler(BaseHTTPRequestHandler):
                 if r[0] == "csv":   # with a BOM so Excel reads accents and dashes correctly
                     return self.send("\ufeff" + r[2], "text/csv; charset=utf-8", extra={"Content-Disposition": 'attachment; filename="%s"' % r[1]})
                 return self.send(r[1])
+            if u.path == "/terms":
+                return self.send(terms_page())
             if u.path == "/coach":
                 return self.send(coach_page())
             if u.path == "/api/update-check":
@@ -1532,6 +1586,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(json.dumps({"ok": False, "error": "Use a PNG or JPG image."}), "application/json", 400)
             set_logo(v)
             return self.send(json.dumps({"ok": True}), "application/json")
+        if u.path == "/api/terms":
+            agree_terms()
+            self.send_response(303)
+            self.send_header("Location", self.headers.get("Referer") or "/")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         if u.path == "/api/update":
             try:
                 return self.send(json.dumps(install_update()), "application/json")

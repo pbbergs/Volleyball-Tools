@@ -10,6 +10,7 @@ const ITEMS = [
   ["stats", "Stats", "Serve, pass, attack, block, set and playing time"],
   ["sync", "Sync", "Send data to Home Base, or bring in a file"],
   ["guide", "Guide", "How to set up and use the app"],
+  ["about", "About & terms", "Version, open-source license, terms of use, replay the welcome"],
   ["work", "Work", "Officiating duties and the rotation"],
   ["links", "Links", "Your helpful links"],
   ["share", "Share the app", "QR code and link to put the app on another coach's phone"],

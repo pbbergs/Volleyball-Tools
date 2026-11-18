@@ -33,6 +33,10 @@ const SECTIONS = [
 <p>After you've opened it once, the app works with no internet at the gym. When a new version is posted, a bar at the bottom says <b>New version available</b>; tap <b>Update</b>. Your data stays.</p>
 <p><b>Version numbers</b> (top of the screen) work like v1.2.3: the first number changes for a big release (v2.0 will be the App Store version), the middle one for a new feature, and the last one for a small fix. Home Base on the PC has its own number in the same style. After an update the app shows <b>What's new</b> once; tap the version number any time to see it again.</p>`],
 
+["terms", "Free, open source, and the terms", `
+<p>Volleyball Tools is free and open source (MIT License), made by the Volleyball Tools contributors. The first time the app opens on a phone, a short welcome explains what it does, how and why to install it on the Home Screen, and the terms of use, which you agree to before starting. If the terms ever change, the app asks you to review them once.</p>
+<p>In short: it's provided as is, with no warranty; your data stays on your phone and your own PC and is never sent to the authors; you're responsible for your backups; and you need permission from your club and players' parents or guardians to record players' information. Read everything, see when you agreed, or replay the welcome on <b>More → About &amp; terms</b>.</p>`],
+
 ["setup", "First-time setup", `
 <ol>
   <li><b>Name this device</b> when the app asks, for example <i>Coach Paul phone</i>. Change it later on More → Sync.</li>

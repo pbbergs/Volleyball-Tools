@@ -17,6 +17,8 @@ import * as links from "./tabs/links.js";
 import * as board from "./tabs/board.js";
 import * as scout from "./tabs/scout.js";
 import * as share from "./tabs/share.js";
+import * as about from "./tabs/about.js";
+import { runWelcome, termsAccepted } from "./welcome.js";
 
 // view name -> [render function, bottom tab it belongs to]
 const VIEWS = {
@@ -35,6 +37,8 @@ const VIEWS = {
   board:    [m => board.render(m, ctx), "more"],
   scout:    [m => scout.render(m, ctx), "more"],
   share:    [m => share.render(m, ctx), "more"],
+  about:    [m => about.render(m, ctx), "more"],
+  welcome:  [m => runWelcome(m, "replay").then(() => ctx.go("about")), "more"],
 };
 
 let view = "serve";
@@ -72,7 +76,7 @@ export const FILES = ["./", "./index.html", "./styles.css", "./icon.png", "./ico
   "./js/app.js", "./js/db.js", "./js/schema.js", "./js/sync.js", "./js/ui.js", "./js/model.js", "./js/match.js", "./js/court.js",
   "./js/tabs/track.js", "./js/tabs/schedule.js", "./js/tabs/team.js", "./js/tabs/stats.js", "./js/tabs/sync.js",
   "./js/tabs/more.js", "./js/tabs/guide.js", "./js/tabs/court.js", "./js/tabs/work.js", "./js/tabs/links.js",
-  "./js/tabs/board.js", "./js/tabs/scout.js", "./js/tabs/share.js", "./js/qr.js"];
+  "./js/tabs/board.js", "./js/tabs/scout.js", "./js/tabs/share.js", "./js/qr.js", "./js/tabs/about.js", "./js/welcome.js", "./js/terms.js"];
 const hosted = /^https?:$/.test(location.protocol);
 async function serverVersion() {
   const [a, b] = await Promise.all([
@@ -115,30 +119,27 @@ async function boot() {
   $("#ver").textContent = APP_VERSION;
   if (hosted) $("#home-link").hidden = false;
   await db.open(msg => toast(msg));
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1"))
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  document.addEventListener("visibilitychange", checkForUpdate);
+  setTimeout(checkForUpdate, 2000);
+  // A new phone gets the full welcome; an existing one only sees the terms when they are new or have changed.
   const brandNew = !db.getLocal("device_name");
-  if (brandNew) {
-    const r = await sheet({
-      title: "Welcome",
-      body: `<p class="sheet-msg">Give this device a name. It appears on sync files so you can tell whose data is whose.</p>
-             <label class="field">Device name<input type="text" id="dev-name" placeholder="e.g. Coach Paul phone" maxlength="40"></label>`,
-      buttons: [{ label: "Save", value: true, cls: "primary" }],
-      check: el => ($("#dev-name", el).value.trim() ? true : "Type a name for this device."),
-    });
-    const name = r.value ? $("#dev-name", r.el).value.trim() : "";
-    await db.setLocal("device_name", name || "Phone");
-  }
+  let start = null;
+  if (brandNew) start = await runWelcome($("#main"), "new");
+  else if (!termsAccepted()) await runWelcome($("#main"), "terms");
+  if (start === "setup") location.hash = "sync";
+  else if (start === "new") location.hash = "team";
   window.addEventListener("hashchange", route);
   route();
+  if (start === "setup") toast("Tap Import file and choose the setup file you were sent.");
+  if (start === "new") toast("Tap Create a team to get started.");
   // Once per update: show what changed since the version this device last saw (not on a brand-new device).
   const seen = db.getLocal("seen_version");
   if (!brandNew && seen !== APP_VERSION) showNotes(seen || RELEASE_NOTES.find(([v]) => newer(APP_VERSION, v))?.[0] || "v0");
   if (seen !== APP_VERSION) db.setLocal("seen_version", APP_VERSION);
   $("#ver").setAttribute("role", "button"); $("#ver").title = "What's new";
   $("#ver").addEventListener("click", () => showNotes(null));
-  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1"))
-    navigator.serviceWorker.register("sw.js").catch(() => {});
-  document.addEventListener("visibilitychange", checkForUpdate);
-  setTimeout(checkForUpdate, 2000);
 }
 boot();
 

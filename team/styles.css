@@ -293,3 +293,27 @@ table.matrix.counts td.zero { color: var(--muted); font-weight: 500; opacity: .5
 .share-qr svg { width: min(78vw, 300px); height: auto; border-radius: 8px; }
 .share-url { margin: 0; word-break: break-all; }
 .share-steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+
+/* Welcome */
+body.onboarding .tabbar, body.onboarding .update { display: none; }
+.ob { display: grid; gap: 12px; }
+.ob h2 { font-size: 26px; }
+.ob-icon { width: 72px; height: 72px; border-radius: 16px; justify-self: center; }
+.ob-lead { font-size: 18px; font-weight: 600; margin: 0; text-align: center; }
+.ob-list, .ob-steps { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.ob-steps li { padding-left: 2px; }
+.ob-ok { margin: 0; font-weight: 700; color: var(--green); }
+.ob-dots { display: flex; gap: 6px; justify-content: center; }
+.ob-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.ob-dots span.on { background: var(--accent); width: 22px; border-radius: 4px; }
+.ob-agree { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; padding: 12px; border-radius: 10px; background: var(--press); }
+.ob-agree input { width: 22px; height: 22px; margin: 0; flex: 0 0 auto; }
+.ob-nav { display: flex; justify-content: space-between; gap: 10px; }
+.ob-nav .btn { flex: 1; }
+.ob-choices { display: grid; gap: 10px; }
+.ob-choices .btn { display: grid; gap: 2px; text-align: left; padding: 12px 14px; white-space: normal; }
+.ob-choices .btn span { font-weight: 500; font-size: 14px; opacity: .85; }
+.ob-err { margin: 0; color: var(--red); font-weight: 600; min-height: 1.2em; }
+.terms-full { max-height: 60vh; overflow-y: auto; }
+.terms-full h3 { font-size: 16px; margin: 14px 0 2px; }
+.terms-full p { margin: 4px 0; }
