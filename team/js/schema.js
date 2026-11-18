@@ -2,10 +2,12 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.5";
+export const APP_VERSION = "v1.5.1";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.5.1", ["Fixed: when the libero rotates from 5 to 4 and is planned to come in at 1 on the same rotate, she now leaves at 4 and comes in at 1.",
+              "The Rotation tab's Rotate button is up next to the heading."]],
   ["v1.5", ["Planned swaps are remembered: a new match starts with the plan your team used last. Change it or Clear plan any time.",
             "Serve and Receive tabs have a Rotate button (with your planned subs). In every-point matches that already rotate on side outs, it asks first."]],
   ["v1.4.4", ["The wheel uses tracker-card colours: when play starts, position 1 is red, the front row green and 5 and 6 white, and the colours turn with the players. L marks the libero, ↻ a sub.",

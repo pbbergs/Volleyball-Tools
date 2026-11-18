@@ -145,13 +145,14 @@ export function render(main, ctx) {
   const lab = pid => (pid === court.LIB ? "Libero" : nameOf(m, pid));
   main.insertAdjacentHTML("beforeend", `<section class="card">
       <div class="card-head"><h2>Rotation</h2><span class="muted">Set ${model.curSet(m)}</span><span class="grow"></span>
+        <button class="btn small" type="button" id="rot2" ${court.liberoFront(m, s) ? "disabled" : ""}>Rotate ↻</button>
         <span class="subs ${s.subs >= court.SUB_LIMIT ? "maxed" : ""}">Subs ${s.subs} of ${court.SUB_LIMIT}</span></div>
       <div class="wheel-wrap">${wheelSvg(m, s, names, srv)}</div>
       <div class="legend"><span><i style="background:${FILL.red}"></i>Started at 1 (first server)</span><span><i style="background:${FILL.green}"></i>Started front row (4, 3, 2)</span>
         <span><i style="background:${FILL.white}"></i>Started at 5, 6</span><span><b>L</b> libero</span><span><b>↻</b> sub in</span></div>
       <p class="small" style="margin:0"><b>Next Rotate:</b> ${next.swaps.length ? next.swaps.map(w => esc(swapText(m, w))).join("; ") : "no planned subs"}${next.notes.length ? ` <span class="muted">(${esc(next.notes.join(" "))})</span>` : ""}</p>
       <p class="muted small" style="margin:0">Tap a slice to plan who goes in for her. The court is changed on the Court tab or with Rotate.</p>
-      <div class="row"><button class="btn" type="button" id="to-court2">Court tab</button><button class="btn primary" type="button" id="rot2" ${court.liberoFront(m, s) ? "disabled" : ""}>Rotate ↻</button></div>
+      <div class="row"><button class="btn" type="button" id="to-court2">Court tab</button></div>
     </section>
     <section class="card">
       <div class="card-head"><h3>Planned swaps</h3><span class="grow"></span>${plan.length ? `<button class="btn small" type="button" id="clear-plan">Clear plan</button>` : ""}<button class="btn small primary" type="button" id="add">+ Plan a swap</button></div>

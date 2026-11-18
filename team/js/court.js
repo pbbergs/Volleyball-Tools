@@ -73,6 +73,7 @@ export function who(m, pid) {
   return `#${e.r.number ?? ""} ${model.shortNames(entries)[pid]}${pos ? ` (${pos})` : ""}`;
 }
 
+// Order matters: the front row (4) is handled first, so a libero who has to leave at 4 is free to come in at 1.
 // trigger: "toBack" (spot just reached 1 from 2), "toFront" (just reached 4 from 5), "lostServe" (we lost the serve; spot at 1),
 // "after6" (spot just reached 6 and her "after she serves" swap hasn't happened, e.g. in matches scored by set only).
 // Changes s in place; returns [{ pos, inPid, outPid, counted }] and notes for anything that couldn't happen. dry = preview only.
@@ -128,7 +129,7 @@ function applyPlan(m, s, triggers, tap, dry = false) {
 export function previewRotate(m, s) {
   const c = JSON.parse(JSON.stringify(s)), L = c.lineup;
   c.lineup = { 1: L[2], 2: L[3], 3: L[4], 4: L[5], 5: L[6], 6: L[1] };
-  return applyPlan(m, c, [[1, "toBack"], [4, "toFront"], [6, "after6"]], null, true);
+  return applyPlan(m, c, [[4, "toFront"], [1, "toBack"], [6, "after6"]], null, true);
 }
 function planned(s, pid) { return !!pairFor(s, pid); }
 // The planned subs that just happened become their own step, so "Undo" on the popup reverses only them.
@@ -183,7 +184,7 @@ export function rotate(m, s, tap = null) {
   s.roles = { 1: R[2], 2: R[3], 3: R[4], 4: R[5], 5: R[6], 6: R[1] };
   s.rot++;
   log(m, s, "rotate", null, null, tap);
-  const plan = planStep(m, s, [[1, "toBack"], [4, "toFront"], [6, "after6"]], tap);
+  const plan = planStep(m, s, [[4, "toFront"], [1, "toBack"], [6, "after6"]], tap);
   // Prompts for players who just crossed rows: 2 -> 1 (front to back) and 5 -> 4 (back to front).
   const prompts = [];
   if (s.subs < SUB_LIMIT || benchLibero(m, s)) {
