@@ -6,7 +6,7 @@ import { esc, sheet, toast } from "./ui.js";
 
 export function nameOf(m, pid) {
   const entries = model.rosterFor(m.team_id), e = entries.find(x => x.p.id === pid);
-  return e ? `#${e.r.number ?? ""} ${model.shortNames(entries)[pid]}` : "?";
+  return e ? `#${e.r.number ?? ""} ${model.shortNames(entries)[pid]}` : "a player no longer on the roster";
 }
 export function swapText(m, w) {
   if (w.move) return `Libero ${nameOf(m, w.inPid)} moves from position ${w.from} to position ${w.pos} for ${nameOf(m, w.outPid)}${w.pos === 1 ? " (to serve)" : ""}`;

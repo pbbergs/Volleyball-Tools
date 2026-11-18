@@ -62,6 +62,14 @@ export const LIB = "L";
 export const planOf = s => s.plan || [];
 export const pairFor = (s, pid) => planOf(s).find(p => p.front === pid || p.back === pid) || null;
 
+// "#18 Name (DS)" from the team's own roster, for messages.
+export function who(m, pid) {
+  const entries = model.rosterFor(m.team_id), e = entries.find(x => x.p.id === pid);
+  if (!e) return "a player no longer on the roster";
+  const pos = model.teamPos(m.team_id, pid);
+  return `#${e.r.number ?? ""} ${model.shortNames(entries)[pid]}${pos ? ` (${pos})` : ""}`;
+}
+
 // trigger: "toBack" (spot just reached 1 from 2), "toFront" (just reached 4 from 5), "lostServe" (we lost the serve; spot at 1),
 // "after6" (spot just reached 6 and her "after she serves" swap hasn't happened, e.g. in matches scored by set only).
 // Changes s in place; returns [{ pos, inPid, outPid, counted }] and notes for anything that couldn't happen. dry = preview only.
@@ -84,8 +92,13 @@ function applyPlan(m, s, triggers, tap, dry = false) {
         // The libero is already on the court in the back row for someone else: she moves here (e.g. 5 -> 1 to serve)
         // and the player she was covering comes back in where she was. Neither counts as a substitution.
         const lib = [...onCourt(s)].find(isL), from = lib ? posOf(s, lib) : 0, back = s.libFor;
-        if (!lib || !BACK.includes(from) || from === pos) continue;
-        if (!back || onCourt(s).has(back)) { notes.push(`The libero is covering another spot and nobody is set to take her place there, so she stays at position ${from}.`); continue; }
+        if (!lib || from === pos) continue;
+        if (!BACK.includes(from)) { notes.push(`Planned swap skipped at position ${pos}: the libero ${who(m, lib)} was supposed to come in for ${who(m, out)}, but she is in the front row at position ${from}.`); continue; }
+        if (!back || onCourt(s).has(back)) {
+          notes.push(`Planned swap skipped at position ${pos}: the libero ${who(m, lib)} was supposed to come in for ${who(m, out)}, but she is already on the court at position ${from}` +
+            (back ? ` for ${who(m, back)}, who is also on the court (position ${posOf(s, back)}), so nobody can take the libero's place there.` : `, and the app doesn't know whose place she took there.`));
+          continue;
+        }
         s.lineup[from] = back; s.lineup[pos] = lib; s.libFor = out;
         if (!dry) { log(m, s, "libero", from, back, tap); log(m, s, "libero", pos, lib, tap); }
         swaps.push({ pos, from, inPid: lib, outPid: out, counted: false, move: true });
@@ -94,9 +107,10 @@ function applyPlan(m, s, triggers, tap, dry = false) {
       }
     }
     if (!pair || !inc) continue;
-    if (onCourt(s).has(inc)) { notes.push(`#${model.rosterRow(m.team_id, inc)?.number ?? ""} is already on the court, so the planned swap at position ${pos} was skipped.`); continue; }
+    const verb = trig === "toFront" ? "come back in for" : "come in for";
+    if (onCourt(s).has(inc)) { notes.push(`Planned swap skipped at position ${pos}: ${who(m, inc)} was supposed to ${verb} ${who(m, out)}, but ${who(m, inc)} is already on the court at position ${posOf(s, inc)}.`); continue; }
     const counted = !isL(inc) && !isL(out);
-    if (counted && s.subs >= SUB_LIMIT) { notes.push(`All ${SUB_LIMIT} substitutions are used, so the planned swap at position ${pos} was skipped.`); continue; }
+    if (counted && s.subs >= SUB_LIMIT) { notes.push(`Planned swap skipped at position ${pos}: ${who(m, inc)} was supposed to ${verb} ${who(m, out)}, but all ${SUB_LIMIT} substitutions in this set are used.`); continue; }
     s.lineup[pos] = inc;
     if (counted) s.subs++;
     if (isL(inc)) s.libFor = out;
