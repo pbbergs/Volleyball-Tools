@@ -74,22 +74,32 @@ async function editPair(m, ctx, pair, startPid) {
   const s = court.state(m), plan = court.planOf(s);
   const isL = pid => model.isLibero(m.team_id, pid), hasLib = entries.some(e => isL(e.p.id));
   const cur = pair || { front: startPid || "", back: "", when: "serve" };
+  // The swap being edited is matched by its players (not by object), so it never counts as "another" swap.
+  const same = p => !!pair && p.front === pair.front && p.back === pair.back;
   const opt = (v, l, sel) => `<option value="${esc(v)}"${v === sel ? " selected" : ""}>${esc(l)}</option>`;
   const lab = e => `#${e.r.number ?? ""} ${names[e.p.id]}${model.teamPos(m.team_id, e.p.id) ? " (" + model.teamPos(m.team_id, e.p.id) + ")" : ""}`;
   const r = await sheet({
     title: pair ? "Change this swap" : "Plan a swap",
     body: `<label class="field">Front-row player<select id="pf">${opt("", "Choose…", cur.front)}${entries.filter(e => !isL(e.p.id)).map(e => opt(e.p.id, lab(e), cur.front)).join("")}</select></label>
       <label class="field">Replaced in the back row by<select id="pb">${opt("", "Choose…", cur.back)}${hasLib ? opt(court.LIB, "The libero", cur.back) : ""}${entries.filter(e => !isL(e.p.id)).map(e => opt(e.p.id, lab(e), cur.back)).join("")}</select></label>
+      <button type="button" class="btn small" id="pswap">⇅ Switch the two players</button>
       <label class="field">When she comes in<select id="pw">${opt("serve", "To serve: as the spot rotates to position 1", cur.when)}${opt("after", "After she serves: when we lose her serve", cur.when)}</select></label>
       <p class="muted small" style="margin:0">The front-row player comes back automatically when the spot rotates to the front row (position 4). The libero never serves unless you choose "To serve" for her.</p>`,
-    onOpen: el => { const b = $("#pb", el), w = $("#pw", el); b.onchange = () => { if (b.value === court.LIB && !pair) w.value = "after"; }; },
+    onOpen: el => {
+      const f = $("#pf", el), b = $("#pb", el), w = $("#pw", el), err = $(".sheet-err", el);
+      b.onchange = () => { if (b.value === court.LIB && !pair) w.value = "after"; };
+      $("#pswap", el).onclick = () => {
+        if (b.value === court.LIB) { err.textContent = "The libero can't be the front-row player, so these two can't be switched."; err.hidden = false; return; }
+        const x = f.value; f.value = b.value; b.value = x; err.hidden = true;
+      };
+    },
     buttons: [{ label: "Save", value: "save", cls: "primary" }, ...(pair ? [{ label: "Remove swap", value: "remove" }] : []), { label: "Cancel", value: null }],
     check: (el, v) => {
       if (v !== "save") return true;
       const f = $("#pf", el).value, b = $("#pb", el).value, w = $("#pw", el).value;
       if (!f || !b) return "Choose both players.";
       if (f === b) return "Choose two different players.";
-      const nm = pid => nameOf(m, pid), others = plan.filter(p => p !== pair);
+      const nm = pid => nameOf(m, pid), others = plan.filter(p => !same(p));   // every swap except the one being edited
       if (others.some(p => p.front === f)) return "That player already has a planned swap; change that one instead.";
       if (others.some(p => p.back === f)) return `${nm(f)} already switches in for another player, so she can't also have a sub of her own.`;
       if (b !== court.LIB) {
@@ -98,7 +108,7 @@ async function editPair(m, ctx, pair, startPid) {
           ? `${nm(b)} already switches in for ${nm(clash.front)}. Only the libero can switch in for more than one player.`
           : `${nm(b)} already has a planned swap of her own, so she can't also switch in for another player.`;
       }
-      if (b === court.LIB && w === "serve" && plan.some(p => p !== pair && p.back === court.LIB && p.when === "serve")) return "The libero can serve for one player only.";
+      if (b === court.LIB && w === "serve" && others.some(p => p.back === court.LIB && p.when === "serve")) return "The libero can serve for one player only.";
       return true;
     },
   });
