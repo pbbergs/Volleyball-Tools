@@ -5,7 +5,7 @@ import * as model from "../model.js";
 import * as court from "../court.js";
 import { renderBar, chooseScoring } from "../match.js";
 import { showSwaps } from "../planui.js";
-import { $, $$, esc, toast } from "../ui.js";
+import { $, $$, esc, toast, ask } from "../ui.js";
 
 const BUTTONS = {
   serve:   [["ace", "Ace", "g"], ["in", "In", "b"], ["out", "Out", "o"]],
@@ -81,7 +81,7 @@ function trackCard(main, ctx, m, skill, heading) {
   const bench = list.filter(e => !pos[e.p.id]);
 
   main.insertAdjacentHTML("beforeend", `<section class="card">
-      <div class="card-head">${heading}<span class="grow"></span>
+      <div class="card-head">${heading}<span class="grow"></span>${hasCourt && (skill === "serve" || skill === "receive") ? `<button class="btn small" type="button" id="trk-rot" ${court.liberoFront(m, s) ? "disabled" : ""}>Rotate ↻</button>` : ""}
         <span class="muted small">${note || (skill === "serve" ? "Pick the server" : "Pick the player")}</span></div>
       ${courtHtml}
       <div class="chips">${hasCourt && bench.length ? `<div class="chip-sep">Bench</div>` : ""}${bench.map(e => chip(e)).join("")}</div>
@@ -93,6 +93,15 @@ function trackCard(main, ctx, m, skill, heading) {
       <p class="muted small" id="sum">${esc(summary(skill, m, sel, sel2, names))}</p>
     </section>`);
 
+  $("#trk-rot", main) && ($("#trk-rot", main).onclick = async () => {
+    const mm = db.get("matches", m.id), cs = court.state(mm);
+    if (mm.scoring === "points" && cs.auto && !(await ask("The app already rotates by itself when you win a rally on their serve (a side out). Rotate anyway?", "Rotate")))
+      return;
+    const r = court.rotate(mm, court.state(mm));
+    if (r.error) { toast(r.error); return; }
+    lastMsg = "↻ Rotated"; lastCls = "u"; ctx.refresh();
+    showSwaps(mm, r, ctx);
+  });
   const setSel = () => {
     db.setLocal(key, sel); if (skill === "block") db.setLocal("sel_block2", sel2);
     for (const x of $$("[data-p]", main)) x.classList.toggle("sel", x.dataset.p === sel || x.dataset.p === sel2);

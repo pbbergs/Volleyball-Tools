@@ -17,13 +17,16 @@ function blank() {
   return { lineup: { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null }, roles: { ...DEFAULT_ROLES },
            subs: 0, rot: 0, hist: [], prompts: [], first: null, auto: true, plan: [], libFor: null };
 }
-// A new set starts with an empty court but keeps the previous set's rotation plan.
+// A new set starts with an empty court but keeps the previous set's rotation plan;
+// a new match starts with the plan this team used last (most teams use the same plan every match).
+const teamPlanKey = m => `plan:${m.team_id}`;
 export function state(m, set) {
   const n = set ?? model.curSet(m);
   const s = db.getLocal(key(m, n));
   if (s) return { ...blank(), ...JSON.parse(JSON.stringify(s)) };
   const b = blank(), prev = n > 1 ? db.getLocal(key(m, n - 1)) : null;
-  if (prev?.plan?.length) b.plan = JSON.parse(JSON.stringify(prev.plan));
+  const from = prev ? prev.plan : n === 1 ? db.getLocal(teamPlanKey(m)) : null;
+  if (from?.length) b.plan = JSON.parse(JSON.stringify(from));
   return b;
 }
 export const save = (m, s) => db.setLocal(key(m), s);
@@ -135,7 +138,7 @@ function planStep(m, s, triggers, tap) {
   if (!r.swaps.length) s.hist.pop();
   return r;
 }
-export function savePlan(m, s, plan) { s.plan = plan; save(m, s); }
+export function savePlan(m, s, plan) { s.plan = plan; save(m, s); db.setLocal(teamPlanKey(m), plan); }
 
 // Libero in the front row: Rotate stays off until she's out.
 export function liberoFront(m, s) {

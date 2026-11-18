@@ -343,3 +343,4 @@ body.onboarding .tabbar, body.onboarding .update { display: none; }
 .plan-link { width: 100%; margin-top: 8px; }
 .swap-list { margin: 0 0 6px; padding-left: 20px; display: grid; gap: 6px; }
 .mb-top .mb-board { padding: 6px 9px; }
+.trk-rot { display: flex; justify-content: flex-end; margin-top: 8px; }

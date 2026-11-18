@@ -128,7 +128,7 @@ First3,Last3,3,Libero,12,12U Blue</pre>
   <li>The front-row player comes back automatically when her spot rotates to the front row (position 4). The libero always leaves before the front row.</li>
   <li>From then on, <b>Rotate</b>, side outs and losing the serve make those subs for you and show what happened, with <b>OK</b> or <b>Undo these subs</b>.</li>
 </ol>
-<p><b>The libero doesn't serve</b> unless you choose "To serve" for her (for one player at most). Libero swaps don't count toward the 15 substitutions; others do, and planned subs are skipped once all 15 are used. Each new set starts with the same plan. Subs you make by hand are respected: a planned swap is skipped if a player isn't where the plan expects. <b>Next Rotate</b> under the wheel shows what the next Rotate will do.</p>`],
+<p><b>The libero doesn't serve</b> unless you choose "To serve" for her (for one player at most). Libero swaps don't count toward the 15 substitutions; others do, and planned subs are skipped once all 15 are used. Each new set starts with the same plan, and a <b>new match starts with the plan your team used last</b>. The Serve and Receive tabs also have a <b>Rotate</b> button (in every-point matches that already rotate on side outs, it asks first). Subs you make by hand are respected: a planned swap is skipped if a player isn't where the plan expects. <b>Next Rotate</b> under the wheel shows what the next Rotate will do.</p>`],
 
 ["work", "Work rotation", `
 <p>When your team works as officials (score keeper, libero tracker, scoreboard, line judges, swing helper), More → <b>Work</b> keeps the jobs fair.</p>

@@ -2,10 +2,12 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.4.4";
+export const APP_VERSION = "v1.5";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.5", ["Planned swaps are remembered: a new match starts with the plan your team used last. Change it or Clear plan any time.",
+            "Serve and Receive tabs have a Rotate button (with your planned subs). In every-point matches that already rotate on side outs, it asks first."]],
   ["v1.4.4", ["The wheel uses tracker-card colours: when play starts, position 1 is red, the front row green and 5 and 6 white, and the colours turn with the players. L marks the libero, ↻ a sub.",
               "Clearer swap messages with names (including the same pair planned twice, or the other way round), and a Clear plan button."]],
   ["v1.4.3", ["Fixed: changing an existing planned swap (for example switching the two players around) no longer says they are already in another swap. New ⇅ Switch the two players button in the swap editor."]],
