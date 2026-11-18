@@ -89,7 +89,7 @@ First3,Last3,3,Libero,12,12U Blue</pre>
 ["court", "The Court tab", `
 <ul>
   <li><b>Lineup:</b> tap a bench player, then a position. If someone was there she goes to the bench; that's a substitution (filling an empty spot isn't). Tap a player on the court to select her, then <b>Take off court</b>.</li>
-  <li><b>Roles:</b> each position carries a role that moves with it: 1 Setter 1, 2 Pin 1, 3 Middle 1, 4 Opposite 1, 5 Pin 2, 6 Middle 2. Setter 1 shows as Opposite 2 in the front row, and Opposite 1 as Setter 2 in the back row. A libero always shows as Libero.</li>
+  <li><b>Positions:</b> the court is numbered 1 to 6 (1 is the server, back right); positions carry no role, since any player can start anywhere. Each box shows the player and her own position from the roster (Setter, Pin, Middle…).</li>
   <li><b>Rotate</b> moves everyone clockwise (4→3, 3→2, 2→1, 1→6, 6→5, 5→4). In point-by-point matches the court rotates by itself when you win a rally on their serve (a side out). Turn that off with <b>Rotate on side outs</b>.</li>
   <li><b>Rotate back</b> moves everyone one spot the other way (1→2 … 6→1), for fixing a lineup that got ahead. It asks nothing and counts nothing.</li>
   <li><b>Undo lineup change</b> steps back through lineup changes, restoring the substitution count too. It never removes recorded stats.</li>

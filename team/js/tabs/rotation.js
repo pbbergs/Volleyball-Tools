@@ -41,7 +41,8 @@ function wheelSvg(m, s, names, srv) {
         const isFront = pair.front === pid;
         const other = isFront ? (pair.back === court.LIB ? "Libero" : names[pair.back] || "?") : names[pair.front] || "?";
         sub = isFront ? `⇄ ${other}` : `for ${other}`;
-      } else sub = role ? role.replace("Right Side", "Opp") : "";
+      } else if (role === "Libero" && s.libFor) sub = `for ${names[s.libFor] || "?"}`;   // whom the libero is covering
+      else sub = role ? role.replace("Right Side", "Opp") : "";
       if (pos === 1 && srv === "us") sub = "● serving";
       out += `<text ${t(95, 10)} class="w-sub" text-anchor="middle">${esc(sub.slice(0, 13))}</text>`;
     } else out += `<text ${t(95, 4)} class="w-sub" text-anchor="middle">empty</text>`;

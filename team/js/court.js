@@ -36,13 +36,12 @@ export const onCourt = s => new Set(Object.values(s.lineup).filter(Boolean));
 export const full = s => [1, 2, 3, 4, 5, 6].every(p => s.lineup[p]);
 export const posOf = (s, pid) => +(Object.keys(s.lineup).find(p => s.lineup[p] === pid) || 0);
 
-// What a box shows: the role of the slot, with the setter/opposite row swap, or "Libero".
+// What a box shows under the player: her own position from the roster (court positions themselves carry no role,
+// since any player can start anywhere).
 export function dispRole(m, s, pos) {
-  if (model.isLibero(m.team_id, s.lineup[pos])) return "Libero";
-  const role = s.roles[pos] || "";
-  if (role === "Setter 1") return BACK.includes(pos) ? "Setter 1" : "Opposite 2";
-  if (role === "Opposite 1") return FRONT.includes(pos) ? "Opposite 1" : "Setter 2";
-  return role;
+  const pid = s.lineup[pos];
+  if (!pid) return "";
+  return model.isLibero(m.team_id, pid) ? "Libero" : model.teamPos(m.team_id, pid) || "";
 }
 
 function remember(s, tap = null) {

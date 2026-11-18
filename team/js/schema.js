@@ -2,10 +2,12 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.5.1";
+export const APP_VERSION = "v1.5.2";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.5.2", ["Court positions no longer carry fixed roles (the setter can start anywhere); each box shows the player's own position from the roster.",
+              "On the wheel, the libero's slice shows whom she is covering."]],
   ["v1.5.1", ["Fixed: when the libero rotates from 5 to 4 and is planned to come in at 1 on the same rotate, she now leaves at 4 and comes in at 1.",
               "The Rotation tab's Rotate button is up next to the heading."]],
   ["v1.5", ["Planned swaps are remembered: a new match starts with the plan your team used last. Change it or Clear plan any time.",

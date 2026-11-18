@@ -28,7 +28,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, quote
 
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 PORT = 8770
 HERE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(HERE, "volleyball.db")
@@ -1036,7 +1036,6 @@ def match_report(conn, q):
 
 
 # ---------- Rotations ----------
-S1_AT = [1, 6, 5, 4, 3, 2]   # where the Setter 1 role is in each rotation (the court turns clockwise)
 
 
 def rot_index(a):
@@ -1061,10 +1060,10 @@ def rotations_report(conn, q):
             r["recv"].append(a)
         elif a["skill"] == "serve":
             r["srv"].append(a)
-    cols = ["Rotation", "Setter 1 at", "Rallies", "Won", "Lost", "+/-", "Receiving", "Side outs", "Side-out %",
+    cols = ["Rotation", "Rallies", "Won", "Lost", "+/-", "Receiving", "Side outs", "Side-out %",
             "Serving", "Won on serve", "Serve-point %", "Passes", "Avg pass", "Serve %"]
     rows, so_pct = [], []
-    def line(label, s1, pts, recv, srv):
+    def line(label, pts, recv, srv):
         won = sum(1 for a in pts if a["result"] == "us")
         rc = [a for a in pts if a["serving"] == "them"]
         sv = [a for a in pts if a["serving"] == "us"]
@@ -1072,19 +1071,19 @@ def rotations_report(conn, q):
         ws = sum(1 for a in sv if a["result"] == "us")
         t = tally(recv + srv)
         sop = (100.0 * so / len(rc)) if rc else None
-        return [label, s1, len(pts), won, len(pts) - won, ("%+d" % (2 * won - len(pts))) if pts else "", len(rc), so, pct(sop),
+        return [label, len(pts), won, len(pts) - won, ("%+d" % (2 * won - len(pts))) if pts else "", len(rc), so, pct(sop),
                 len(sv), ws, pct((100.0 * ws / len(sv)) if sv else None), t["passes"], avgf(t["pass"]), pct(t["srv"])], sop
     for i, r in enumerate(R):
-        row, sop = line("Rotation %d" % (i + 1), "Position %d" % S1_AT[i], r["pts"], r["recv"], r["srv"])
+        row, sop = line("Rotation %d" % (i + 1), r["pts"], r["recv"], r["srv"])
         rows.append(row); so_pct.append(sop)
-    foot = line("All", "", sum((r["pts"] for r in R), []), sum((r["recv"] for r in R), []), sum((r["srv"] for r in R), []))[0]
+    foot = line("All", sum((r["pts"] for r in R), []), sum((r["recv"] for r in R), []), sum((r["srv"] for r in R), []))[0]
     if not any(r["pts"] for r in R):
         rows = []
     bars = "".join("<div class='hb'><span>Rotation %d</span><div class='hb-track'><div class='hb-fill %s' style='width:%d%%'></div></div><b>%s</b></div>" % (
         i + 1, "" if v is None else ("red" if v < 40 else "amber" if v < 55 else "green"), 0 if v is None else max(2, round(v)), "–" if v is None else "%d%%" % round(v))
         for i, v in enumerate(so_pct))
     note = ("<p class='muted'>From point-by-point matches tracked with the Court tab. Rotation 1 is each set's starting lineup; "
-            "Rotation 2 is after one rotation, and so on (Setter 1 at shows where the Setter 1 role is). A side out is winning a rally on their serve. "
+            "Rotation 2 is after one rotation, and so on. A side out is winning a rally on their serve. "
             "Passes and serve %% are the taps made in that rotation.%s</p>") % (
         (" %d rall%s without a full lineup on the Court tab %s left out." % (skipped, "y" if skipped == 1 else "ies", "was" if skipped == 1 else "were")) if skipped else "")
     parts = [card("Side-out % by rotation", "<div class='hbars'>%s</div>" % bars) if rows else "", card("Every rotation", table_block(cols, rows, foot if rows else None))]
