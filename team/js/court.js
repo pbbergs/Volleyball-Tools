@@ -80,7 +80,18 @@ function applyPlan(m, s, triggers, tap, dry = false) {
     } else {
       pair = plan.find(p => p.front === out && p.when === (trig === "toBack" ? "serve" : "after"));   // "lostServe" or "after6"
       if (pair) inc = pair.back === LIB ? benchLibero(m, s) : pair.back;
-      if (pair && pair.back === LIB && !inc) { notes.push("The libero is already on the court, so she can't come in at position " + pos + "."); continue; }
+      if (pair && pair.back === LIB && !inc) {
+        // The libero is already on the court in the back row for someone else: she moves here (e.g. 5 -> 1 to serve)
+        // and the player she was covering comes back in where she was. Neither counts as a substitution.
+        const lib = [...onCourt(s)].find(isL), from = lib ? posOf(s, lib) : 0, back = s.libFor;
+        if (!lib || !BACK.includes(from) || from === pos) continue;
+        if (!back || onCourt(s).has(back)) { notes.push(`The libero is covering another spot and nobody is set to take her place there, so she stays at position ${from}.`); continue; }
+        s.lineup[from] = back; s.lineup[pos] = lib; s.libFor = out;
+        if (!dry) { log(m, s, "libero", from, back, tap); log(m, s, "libero", pos, lib, tap); }
+        swaps.push({ pos, from, inPid: lib, outPid: out, counted: false, move: true });
+        swaps.push({ pos: from, inPid: back, outPid: lib, counted: false, ret: true });
+        continue;
+      }
     }
     if (!pair || !inc) continue;
     if (onCourt(s).has(inc)) { notes.push(`#${model.rosterRow(m.team_id, inc)?.number ?? ""} is already on the court, so the planned swap at position ${pos} was skipped.`); continue; }
@@ -129,6 +140,8 @@ export function place(m, s, pos, pid) {
   const from = posOf(s, pid); if (from) s.lineup[from] = null;   // moving within the court
   s.lineup[pos] = pid;
   if (counted) s.subs++;
+  if (model.isLibero(m.team_id, pid)) s.libFor = prev || null;          // who the libero is covering (for the plan)
+  else if (prev && model.isLibero(m.team_id, prev)) s.libFor = null;
   s.prompts = s.prompts.filter(p => p.pos !== pos);
   log(m, s, prev ? (counted ? "sub" : "libero") : "in", pos, pid);
   save(m, s);

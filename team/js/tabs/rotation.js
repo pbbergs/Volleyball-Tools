@@ -89,7 +89,15 @@ async function editPair(m, ctx, pair, startPid) {
       const f = $("#pf", el).value, b = $("#pb", el).value, w = $("#pw", el).value;
       if (!f || !b) return "Choose both players.";
       if (f === b) return "Choose two different players.";
-      if (plan.some(p => p !== pair && p.front === f)) return "That player already has a planned swap; change that one instead.";
+      const nm = pid => nameOf(m, pid), others = plan.filter(p => p !== pair);
+      if (others.some(p => p.front === f)) return "That player already has a planned swap; change that one instead.";
+      if (others.some(p => p.back === f)) return `${nm(f)} already switches in for another player, so she can't also have a sub of her own.`;
+      if (b !== court.LIB) {
+        const clash = others.find(p => p.back === b || p.front === b);
+        if (clash) return clash.back === b
+          ? `${nm(b)} already switches in for ${nm(clash.front)}. Only the libero can switch in for more than one player.`
+          : `${nm(b)} already has a planned swap of her own, so she can't also switch in for another player.`;
+      }
       if (b === court.LIB && w === "serve" && plan.some(p => p !== pair && p.back === court.LIB && p.when === "serve")) return "The libero can serve for one player only.";
       return true;
     },

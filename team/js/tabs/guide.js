@@ -39,7 +39,7 @@ const SECTIONS = [
 
 ["setup", "First-time setup", `
 <ol>
-  <li><b>Name this device</b> when the app asks, for example <i>Coach Paul phone</i>. Change it later on More → Sync.</li>
+  <li><b>Name this device</b> when the app asks, for example <i>Head coach phone</i>. Change it later on More → Sync.</li>
   <li><b>Create your team</b> on More → Team: team name and season.</li>
   <li><b>Coaches:</b> fill in the head coach and up to three assistant coaches on the same page.</li>
   <li><b>Players:</b> tap <b>+ New player</b>, or <b>Import CSV…</b> to load a whole list (see the next section). New players are added to the club list and to the team you're working with.</li>
@@ -54,9 +54,9 @@ const SECTIONS = [
 ["csv", "Player CSV files", `
 <p>One player per line. With a header row, the columns can be in any order:</p>
 <pre>First Name,Last Name,Number,Position,Age,Team
-Ava,Smith,7,Setter,13,13U Gold
-Mia,Jones,12,Pin,13,13U Gold
-Zoe,Lee,3,Libero,12,12U Blue</pre>
+First1,Last1,7,Setter,13,13U Gold
+First2,Last2,12,Pin,13,13U Gold
+First3,Last3,3,Libero,12,12U Blue</pre>
 <ul>
   <li>Without a header, the order must be: first name, last name, number, position, age, team.</li>
   <li>Only first name is required. Positions: Setter, Pin, Middle, Right Side, Libero, DS.</li>

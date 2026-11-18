@@ -9,6 +9,8 @@ export function nameOf(m, pid) {
   return e ? `#${e.r.number ?? ""} ${model.shortNames(entries)[pid]}` : "?";
 }
 export function swapText(m, w) {
+  if (w.move) return `Libero ${nameOf(m, w.inPid)} moves from position ${w.from} to position ${w.pos} for ${nameOf(m, w.outPid)}${w.pos === 1 ? " (to serve)" : ""}`;
+  if (w.ret) return `${nameOf(m, w.inPid)} back in at position ${w.pos} (for the libero)`;
   const lib = model.isLibero(m.team_id, w.inPid) ? "Libero " : "";
   return `${lib}${nameOf(m, w.inPid)} in for ${nameOf(m, w.outPid)} (position ${w.pos})`;
 }

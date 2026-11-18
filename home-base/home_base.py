@@ -28,7 +28,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, quote
 
-VERSION = "1.2"
+VERSION = "1.2.1"
 PORT = 8770
 HERE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(HERE, "volleyball.db")
@@ -1514,7 +1514,7 @@ def coach_page():
         <ol>
           <li><b>Scan the QR code</b> with your phone's camera and tap the link. (iPhone: it must open in <b>Safari</b>. Android: <b>Chrome</b>.)</li>
           <li><b>Install it.</b> iPhone: tap <b>Share</b> &rarr; <b>Add to Home Screen</b> &rarr; <b>Add</b>. Android: tap <b>&#8942;</b> &rarr; <b>Install app</b>.</li>
-          <li><b>Open Team from your Home Screen</b> (always open it that way) and give your phone a name, for example <i>Coach Sam phone</i>.</li>
+          <li><b>Open Team from your Home Screen</b> (always open it that way) and give your phone a name, for example <i>Assistant coach phone</i>.</li>
           <li><b>Load the team:</b> save the setup file your head coach sends you, then in the app go to <b>More &rarr; Sync &rarr; Import file</b> and choose it.</li>
         </ol>
         <p class='muted'>To send your stats back: <b>More &rarr; Sync &rarr; Export</b> and send the file to your head coach.</p></div>

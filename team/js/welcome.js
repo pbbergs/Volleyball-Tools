@@ -82,7 +82,7 @@ export function runWelcome(main, mode = "new") {
         next = mode === "replay" ? "Next" : "I agree";
       } else {
         title = "Get started";
-        html = `<label class="field">Name this phone<input type="text" id="dev-name" maxlength="40" placeholder="e.g. Coach Paul phone" autocomplete="off"></label>
+        html = `<label class="field">Name this phone<input type="text" id="dev-name" maxlength="40" placeholder="e.g. Head coach phone" autocomplete="off"></label>
           <p class="muted small" style="margin:0">It appears on files you send, so everyone can tell whose data is whose.</p>
           <div class="ob-choices">
             <button type="button" class="btn primary" data-go="setup"><b>I have a setup file</b><span>from my head coach or club: load the team, players and schedule</span></button>
