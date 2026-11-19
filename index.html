@@ -64,10 +64,12 @@ main { padding-block: 24px 48px; padding-left: max(20px, env(safe-area-inset-lef
 </style>
 </head>
 <body>
+<!-- Intro: a volleyball flies at you and bursts (once per launch; tap to skip; off with Reduce Motion). Loaded first so the page never flashes before it. -->
+<script src="intro.js?v=1.4"></script>
 <header>
   <div class="in">
-    <h1>Volleyball Tools</h1>
-    <p>Simple stat trackers for practice and tryouts. <span class="ver" id="ver">v1.3</span></p>
+    <h1 id="title" title="Tap to see the intro again">Volleyball Tools</h1>
+    <p>Simple stat trackers for practice and tryouts. <span class="ver" id="ver">v1.4</span></p>
   </div>
 </header>
 
@@ -115,6 +117,7 @@ main { padding-block: 24px 48px; padding-left: max(20px, env(safe-area-inset-lef
     } catch {}
   }
   document.getElementById("update-btn").addEventListener("click", () => location.reload());
+  document.getElementById("title").addEventListener("click", () => window.vbtIntro && window.vbtIntro());   // replay the intro
   document.addEventListener("visibilitychange", check);
   setTimeout(check, 1500);
 })();

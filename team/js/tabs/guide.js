@@ -178,7 +178,8 @@ First3,Last3,3,Libero,12,12U Blue</pre>
 ["homebase", "Home Base on the PC", `
 <ol>
   <li>Install Python 3 from python.org. On the first installer screen, tick <b>Add python.exe to PATH</b>.</li>
-  <li>Put the <code>vb-home-base</code> folder somewhere permanent, such as Documents.</li>
+  <li><b>Quickest:</b> open PowerShell and run <code>irm https://pbbergs.github.io/Volleyball-Tools/home-base/install.txt | iex</code>. It sets up <code>C:\vb-home-base</code> and a Desktop shortcut. Or follow the steps on the <a href="https://pbbergs.github.io/Volleyball-Tools/home-base/" target="_blank" rel="noopener">Get Home Base</a> page.</li>
+  <li>Doing it by hand: put the <code>vb-home-base</code> folder somewhere permanent, such as Documents.</li>
   <li>Double-click <code>start-home-base.bat</code>. Leave the black window open; your browser opens Home Base at <code>http://localhost:8770</code>.</li>
   <li>The Dashboard imports files, downloads setup files, and lists recent imports. The tabs across the top hold the reports: season stats, player cards, match reports, rotations, trends, playing time, results, schedule, work and scouting, each with filters, Excel download and print.</li>
   <li><b>Updates:</b> the Dashboard says when a new Home Base is available; click <b>Update now</b>. It backs up the database and the old program first, then restarts itself.</li>
@@ -186,6 +187,16 @@ First3,Last3,3,Libero,12,12U Blue</pre>
 </ol>
 <p><b>Club logo:</b> on the Home Base dashboard, under <b>Club logo</b>, choose the image (PNG or JPG). It goes out in the next <b>setup file</b>, so each phone shows it in the app's header after importing; it also appears on Home Base's pages and at the top of emailed stats. The Home Screen icon is separate: click <b>Download app icon</b>, upload the three files it saves (<code>icon.png</code> for iPhones and iPads, <code>icon-192.png</code> and <code>icon-512.png</code> for Android) into the <code>team</code> folder on GitHub, and each phone re-adds the app to the Home Screen once.</p>
 <p>The master database is <code>volleyball.db</code> in that folder: a normal SQLite file you can open with DB Browser for SQLite. Home Base keeps a copy of every imported file in <code>imports</code> and a daily backup of the database in <code>backups</code>.</p>`],
+
+["club", "Using the app for another team or club", `
+<p>Friends coaching other teams can use the same app. Nothing needs to be copied or changed: each club's data stays on its own phones and its own PC.</p>
+<ul>
+  <li><b>Another team in your club:</b> on More → Team tap <b>+ New team</b>, and pick it in the <b>Working with</b> menu. Each team has its own roster, schedule, colour levels and planned swaps. One Home Base holds every team in the club.</li>
+  <li><b>Another club:</b> send their coach the app link (More → Share the app). They start fresh: the welcome, then <b>New team</b>. Never send them your setup or sync files: those carry your players' names.</li>
+  <li><b>Their own Home Base:</b> one per club, on their own PC, from the <a href="https://pbbergs.github.io/Volleyball-Tools/home-base/" target="_blank" rel="noopener">Get Home Base</a> page. It starts empty and only ever holds the files their coaches send it.</li>
+  <li><b>One coach, two clubs:</b> keep each club on its own Home Base. On the phone, both can live side by side as separate teams; export with care, since a sync file from that phone carries both.</li>
+  <li><b>Updates</b> come to everyone at once from the same site. Each club agrees to the terms of use on its own phones and PC.</li>
+</ul>`],
 
 ["data", "Keeping your data safe", `
 <ul>

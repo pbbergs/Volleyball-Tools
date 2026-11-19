@@ -4,7 +4,16 @@ Home Base keeps the club's master database (volleyball.db) on this PC. Coaches t
 in the Team app on their phones, export a sync file, and Home Base merges it in. Home Base can
 also make a setup file (teams, players, rosters, schedule, links) for the phones.
 
-ONE-TIME SETUP
+QUICK INSTALL (ONE LINE)
+Install Python 3 first (step 1 below). Then open PowerShell, paste this line and press Enter:
+
+    irm https://pbbergs.github.io/Volleyball-Tools/home-base/install.txt | iex
+
+It makes C:\vb-home-base, downloads the program files, unblocks them, adds a Home Base shortcut
+to the Desktop and offers to start it. Running it again updates the program; your data stays.
+Setup steps and downloads: https://pbbergs.github.io/Volleyball-Tools/home-base/
+
+ONE-TIME SETUP (BY HAND)
 1. Install Python 3 from https://www.python.org/downloads/ (version 3.7 or newer).
    On the first installer screen, tick "Add python.exe to PATH".
 2. Put this whole vb-home-base folder somewhere permanent, for example Documents\vb-home-base.
