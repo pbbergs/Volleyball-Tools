@@ -4,6 +4,7 @@ import * as db from "../db.js";
 import * as model from "../model.js";
 import { POSITIONS, STAFF_ROLES, ROT_COUNTS } from "../schema.js";
 import { $, $$, esc, sheet, ask, say, toast } from "../ui.js";
+import { levelsField, wireLevels, readLevels } from "../levels.js";
 
 const posOptions = cur => `<option value="">—</option>` +
   POSITIONS.map(p => `<option${p === cur ? " selected" : ""}>${esc(p)}</option>`).join("");
@@ -12,11 +13,15 @@ const posOptions = cur => `<option value="">—</option>` +
 async function newTeam(ctx) {
   const r = await sheet({ title: "New team",
     body: `<label class="field">Team name<input type="text" id="t-name" maxlength="60" placeholder="e.g. 13U Gold"></label>
-           <label class="field">Season (optional)<input type="text" id="t-season" maxlength="30" placeholder="e.g. 2026–27"></label>`,
+           <label class="field">Season (optional)<input type="text" id="t-season" maxlength="30" placeholder="e.g. 2026–27"></label>
+           ${levelsField(null)}
+           <p class="muted small" style="margin:0">Colour levels set how strict the red, yellow and green are on the gauges and the Board. Pick what suits the team's skill level; you can change it later on More → Team.</p>`,
+    onOpen: el => wireLevels(el),
     buttons: [{ label: "Create team", value: true, cls: "primary" }, { label: "Cancel", value: null }],
-    check: el => ($("#t-name", el).value.trim() ? true : "Type the team name.") });
+    check: el => (!$("#t-name", el).value.trim() ? "Type the team name." : readLevels(el).error || true) });
   if (!r.value) return;
-  const t = db.insert("teams", { name: $("#t-name", r.el).value.trim(), season: $("#t-season", r.el).value.trim() });
+  const lv = readLevels(r.el);
+  const t = db.insert("teams", { name: $("#t-name", r.el).value.trim(), season: $("#t-season", r.el).value.trim(), levels: JSON.stringify(lv) });
   model.setCurrentTeam(t.id);
   toast(`Created ${t.name}.`);
   ctx.refresh();
@@ -196,6 +201,12 @@ export function render(main, ctx) {
       </div>
     </section>
 
+    <section class="card" id="levels-card">
+      <h2>Colour levels</h2>
+      <p class="muted small" style="margin:0">How strict red, yellow and green are for this team on the gauges, the Board and scouting. Pick a level for the team's age and skill, or Custom.</p>
+      ${levelsField(team)}
+    </section>
+
     <section class="card">
       <h2>Coaches</h2>
       ${STAFF_ROLES.map((role, i) => { const s = staffRow(team.id, role) || {}; return `
@@ -234,6 +245,7 @@ export function render(main, ctx) {
   if (pick) pick.onchange = () => { model.setCurrentTeam(pick.value); ctx.refresh(); };
   $("#t-name", main).onchange = e => { const v = e.target.value.trim(); if (v) { db.update("teams", team.id, { name: v }); ctx.refresh(); } else e.target.value = team.name; };
   $("#t-season", main).onchange = e => db.update("teams", team.id, { season: e.target.value.trim() });
+  wireLevels($("#levels-card", main), v => { db.update("teams", team.id, { levels: JSON.stringify(v) }); toast("Colour levels saved."); });
   for (const row of $$("[data-role]", main)) {
     const save = () => saveStaff(team.id, row.dataset.role, $(".s-first", row).value.trim(), $(".s-last", row).value.trim());
     $(".s-first", row).onchange = save; $(".s-last", row).onchange = save;

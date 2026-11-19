@@ -344,3 +344,30 @@ body.onboarding .tabbar, body.onboarding .update { display: none; }
 .swap-list { margin: 0 0 6px; padding-left: 20px; display: grid; gap: 6px; }
 .mb-top .mb-board { padding: 6px 9px; }
 .trk-rot { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+/* Colour levels form */
+.lv-custom { display: grid; gap: 8px; }
+.lv-row { display: grid; grid-template-columns: minmax(0, 1fr) 5.2em auto 5.2em; gap: 8px; align-items: center; font-weight: 600; font-size: 14px; }
+.lv-row input { width: 100%; min-width: 0; }
+
+/* Player card and gauges */
+tr.tap { cursor: pointer; }
+tr.tap td:first-child { color: var(--accent); font-weight: 600; }
+.pc-head { display: flex; gap: 12px; align-items: center; }
+.pc-num { font-family: var(--font-display); font-size: 34px; font-weight: 700; background: var(--head); color: var(--head-ink); border-radius: 12px; min-width: 58px; text-align: center; padding: 2px 8px; }
+.pc-head h2 { margin: 0; }
+.gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.gauge-box { margin: 0; text-align: center; min-width: 0; }
+.gauge-box figcaption { font-family: var(--font-display); font-weight: 700; font-size: 18px; text-transform: uppercase; letter-spacing: .02em; }
+.gauge { width: 100%; max-width: 260px; height: auto; display: block; margin: 0 auto; }
+.g-tick { stroke: var(--muted); stroke-width: 2; }
+.g-lbl { fill: var(--muted); font-size: 11px; font-weight: 600; }
+.g-needle { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+.g-tip { fill: var(--ink); }
+.g-hub { fill: var(--ink); }
+.g-val { fill: var(--ink); font-family: var(--font-display); font-size: 26px; font-weight: 700; }
+.g-sub { color: var(--muted); font-size: 13px; font-weight: 600; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.kpi { background: var(--press); border-radius: 10px; padding: 8px 10px; }
+.kpi b { display: block; font-family: var(--font-display); font-size: 24px; }
+.kpi span { font-size: 12px; color: var(--muted); font-weight: 600; }

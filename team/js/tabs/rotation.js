@@ -80,6 +80,34 @@ function checks(m, s) {
   return { warn, info };
 }
 
+// Court vs. plan: where the players on the court don't match the plan, and the one-tap fix when it's clear.
+function mismatches(m, s) {
+  const out = [], on = court.onCourt(s), W = pid => court.who(m, pid);
+  const isL = pid => model.isLibero(m.team_id, pid);
+  const lib = model.rosterFor(m.team_id).map(e => e.p.id).find(isL) || null;
+  const pos = pid => court.posOf(s, pid), front = p => court.FRONT.includes(p), back = p => court.BACK.includes(p);
+  for (const pr of court.planOf(s)) {
+    const F = pr.front, B = pr.back === court.LIB ? lib : pr.back, fp = pos(F), bp = B ? pos(B) : 0;
+    const sub = pr.back === court.LIB ? "the libero" + (B ? ` ${W(B)}` : "") : W(B);
+    if (!B) continue;
+    if (pr.back !== court.LIB && fp && bp) {
+      out.push({ text: `${W(F)} (position ${fp}) and ${W(B)} (position ${bp}) are both on the court, but the plan has them sharing one spot. One of them is probably in another player's place: check the Court tab.` });
+      continue;
+    }
+    // front-row player still in where the plan has her sub in the back row
+    if (fp && back(fp) && !bp && (pr.when === "serve" || fp !== 1) && !(pr.back === court.LIB && on.has(lib))) {
+      out.push({ text: `${W(F)} is in the back row (position ${fp}), but the plan has ${sub} in for her there.`, fix: { pos: fp, pid: B, label: `Put ${pr.back === court.LIB ? "the libero" : "#" + (model.rosterRow(m.team_id, B)?.number ?? "")} in` } });
+      continue;
+    }
+    // sub (or the libero, covering her) in the front row where the plan has the front-row player back in
+    const cover = pr.back === court.LIB ? (s.libFor === F ? lib : null) : B;
+    const cp = cover ? pos(cover) : 0;
+    if (cp && front(cp) && !fp)
+      out.push({ text: `${W(cover)} is in the front row (position ${cp}), but the plan has ${W(F)} back in there.`, fix: { pos: cp, pid: F, label: `Put #${model.rosterRow(m.team_id, F)?.number ?? ""} back in` } });
+  }
+  return out;
+}
+
 async function editPair(m, ctx, pair, startPid) {
   const entries = model.rosterFor(m.team_id), names = model.shortNames(entries);
   const s = court.state(m), plan = court.planOf(s);
@@ -141,7 +169,7 @@ export function render(main, ctx) {
   if (!m) return;
   const s = court.state(m), entries = model.rosterFor(m.team_id), names = model.shortNames(entries);
   const srv = m.scoring === "points" ? court.serving(m, s) : null;
-  const plan = court.planOf(s), { warn, info } = checks(m, s);
+  const plan = court.planOf(s), { warn, info } = checks(m, s), mm = court.full(s) || court.onCourt(s).size ? mismatches(m, s) : [];
   const next = court.full(s) ? court.previewRotate(m, s) : { swaps: [], notes: [] };
   const lab = pid => (pid === court.LIB ? "Libero" : nameOf(m, pid));
   main.insertAdjacentHTML("beforeend", `<section class="card">
@@ -163,6 +191,8 @@ export function render(main, ctx) {
         : `<p class="muted" style="margin:0">No swaps planned. Rotate just rotates, as before.</p>`}
       <p class="muted small" style="margin:0">Each new set starts with this plan. Subs you make by hand are respected: a planned swap is skipped if the player isn't where the plan expects.</p>
     </section>
+    ${mm.length ? `<section class="card" id="cvp"><h3>Court vs. plan</h3>${mm.map((x, i) => `<div class="notice">${esc(x.text)}${x.fix ? `<div class="row" style="margin-top:8px"><button class="btn small primary" type="button" data-fix="${i}">${esc(x.fix.label)}</button></div>` : ""}</div>`).join("")}
+      <p class="muted small" style="margin:0">Fixes count as substitutions, except for the libero.</p></section>` : ""}
     ${warn.length || info.length ? `<section class="card">${warn.map(w => `<div class="notice">${esc(w)}</div>`).join("")}${info.map(t => `<p class="small" style="margin:0">${esc(t)}</p>`).join("")}</section>` : ""}`);
   for (const p of $$(".w-slice", main)) p.onclick = () => {
     const pid = s.lineup[+p.dataset.pos];
@@ -171,6 +201,11 @@ export function render(main, ctx) {
     editPair(m, ctx, court.pairFor(s, pid), pid);
   };
   for (const b of $$("[data-i]", main)) b.onclick = () => editPair(m, ctx, plan[+b.dataset.i]);
+  for (const b of $$("[data-fix]", main)) b.onclick = () => {
+    const f = mm[+b.dataset.fix].fix, cs = court.state(m), r = court.place(m, cs, f.pos, f.pid);
+    if (r.error) { toast(r.error); return; }
+    toast(r.counted ? `Fixed. Substitution ${cs.subs} of ${court.SUB_LIMIT}.` : "Fixed."); ctx.refresh();
+  };
   $("#add", main).onclick = () => editPair(m, ctx, null);
   $("#clear-plan", main) && ($("#clear-plan", main).onclick = async () => {
     if (!(await ask(`Remove all ${plan.length} planned swaps for set ${model.curSet(m)}? The players on the court stay where they are.`, "Clear plan", true))) return;

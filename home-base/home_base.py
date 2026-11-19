@@ -28,7 +28,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, quote
 
-VERSION = "1.2.2"
+VERSION = "1.3"
 PORT = 8770
 HERE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(HERE, "volleyball.db")
@@ -41,7 +41,7 @@ SYNC_FORMAT, SYNC_FORMAT_VERSION = "vbteam-sync", 1
 # sync file are added automatically, so the database can grow without changing this program.
 COMMON = ["id", "created_at", "updated_at", "device", "deleted"]
 TABLES = {
-    "teams":     ["name", "season", "notes"],
+    "teams":     ["name", "season", "notes", "levels"],
     "staff":     ["team_id", "role", "first", "last", "phone", "email"],
     "players":   ["first", "last", "number", "position", "age", "birth_date", "notes"],
     "roster":    ["team_id", "player_id", "number", "position", "rot"],
@@ -391,6 +391,7 @@ table.work td,table.work th{text-align:center}table.work td:nth-child(2),table.w
 
 .foot{text-align:center;font-size:13px;color:#5d6877;padding:8px 0}.terms-card{border:2px solid #1a6fb5}.terms-card form{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .terms h3{margin:14px 0 2px;font-size:16px}.terms p{margin:4px 0}
+.gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}.gauge-box{margin:0;text-align:center}.gauge-box figcaption{font-weight:700}.gauge{width:100%;max-width:280px;height:auto}
 .coach{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:start}.qr{text-align:center}.qr svg{width:240px;height:auto;display:block}
 .coach ol{display:grid;gap:8px;padding-left:22px}@media (max-width:700px){.coach{grid-template-columns:1fr}}
 @media print{body{background:#fff}header nav,.noprint,.filters{display:none}header{background:#fff;color:#17202b;padding:0 0 8px}
@@ -852,12 +853,58 @@ def card(h, inner, cls=""):
     return "<section class='card %s'>%s%s</section>" % (cls, ("<h2>%s</h2>" % esc(h)) if h else "", inner)
 
 
-BANDS = {"srv": [(0, 70, "#fde2e2"), (70, 85, "#fdebd3"), (85, 100, "#dcf2e3")],
-         "pass": [(0, 1.5, "#fde2e2"), (1.5, 2.0, "#fdebd3"), (2.0, 3, "#dcf2e3")],
-         "hit": [(-1, 0, "#fde2e2"), (0, 0.15, "#fdebd3"), (0.15, 1, "#dcf2e3")]}
+# Colour levels per team (same presets as the app's levels.js); stored on the team row as JSON.
+LEVEL_PRESETS = {"young": {"pass": [1.0, 1.75], "serve": [60, 80], "hit": [-0.05, 0.10]},
+                 "intermediate": {"pass": [1.5, 2.0], "serve": [70, 85], "hit": [0, 0.15]},
+                 "advanced": {"pass": [1.8, 2.2], "serve": [80, 90], "hit": [0.10, 0.25]}}
 
 
-def line_chart(title, labels, values, kind, lo, hi, fmt, ticks=None):
+def team_cuts(conn, team_id):
+    row = conn.execute("SELECT levels FROM teams WHERE id = ?", (team_id,)).fetchone() if team_id else None
+    try:
+        v = json.loads(row[0]) if row and row[0] else {}
+    except (TypeError, ValueError):
+        v = {}
+    base = LEVEL_PRESETS.get(v.get("preset"), LEVEL_PRESETS["young"])
+    if v.get("preset") == "custom":
+        def ok(x, d):
+            try:
+                a, b = float(x[0]), float(x[1])
+                return [a, b] if a <= b else d
+            except (TypeError, ValueError, IndexError, KeyError):
+                return d
+        return {k: ok(v.get(k), LEVEL_PRESETS["intermediate"][k]) for k in ("pass", "serve", "hit")}
+    return dict(base)
+
+
+BAND_COL = ("#fde2e2", "#fdebd3", "#dcf2e3")
+
+
+def gauge_svg(title, value, lo, hi, cuts, fmt, sub):
+    W, cx, cy, R, T = 220, 110, 112, 92, 22
+    def ang(v):
+        return math.pi * (1 - (min(hi, max(lo, v)) - lo) / float(hi - lo))
+    def P(r, a):
+        return "%.1f %.1f" % (cx + r * math.cos(a), cy - r * math.sin(a))
+    def arc(v0, v1, col):
+        a0, a1 = ang(v0), ang(v1)
+        return "<path d='M%s A%d %d 0 0 1 %s L%s A%d %d 0 0 0 %s Z' fill='%s'/>" % (P(R, a0), R, R, P(R, a1), P(R - T, a1), R - T, R - T, P(R - T, a0), col)
+    s = ["<svg viewBox='-22 0 %d 150' class='gauge' role='img' aria-label='%s'>" % (W + 44, esc(title))]
+    s.append(arc(lo, cuts[0], "#c3262e") + arc(cuts[0], cuts[1], "#e0a800") + arc(cuts[1], hi, "#1d7a3e"))
+    for t in [lo, cuts[0], cuts[1], hi]:
+        a = ang(t)
+        s.append("<line x1='%.1f' y1='%.1f' x2='%.1f' y2='%.1f' stroke='#5d6877' stroke-width='2'/>" % (cx + (R + 2) * math.cos(a), cy - (R + 2) * math.sin(a), cx + (R + 7) * math.cos(a), cy - (R + 7) * math.sin(a)))
+        s.append("<text x='%.1f' y='%.1f' font-size='11' fill='#5d6877' text-anchor='middle'>%s</text>" % (cx + (R + 16) * math.cos(a), cy - (R + 16) * math.sin(a) + 4, esc(fmt(t))))
+    if value is not None:
+        a = ang(value)
+        s.append("<line x1='%d' y1='%d' x2='%.1f' y2='%.1f' stroke='#17202b' stroke-width='4' stroke-linecap='round'/>" % (cx, cy, cx + (R - 6) * math.cos(a), cy - (R - 6) * math.sin(a)))
+        s.append("<polygon points='%s %s %s' fill='#17202b'/>" % (P(R - 2, a), P(R - 18, a + 0.07), P(R - 18, a - 0.07)))
+    s.append("<circle cx='%d' cy='%d' r='7' fill='#17202b'/><text x='%d' y='%d' font-size='26' font-weight='700' fill='#17202b' text-anchor='middle'>%s</text></svg>" % (
+        cx, cy, cx, cy + 26, "–" if value is None else esc(fmt(value))))
+    return "<figure class='gauge-box'><figcaption>%s</figcaption>%s<div class='muted'>%s</div></figure>" % (esc(title), "".join(s), esc(sub))
+
+
+def line_chart(title, labels, values, kind, lo, hi, fmt, ticks=None, cuts=None):
     pts = [(i, v) for i, v in enumerate(values) if v is not None]
     if not pts:
         return "<div class='chart'><h3>%s</h3><p class='muted'>Not enough data yet.</p></div>" % esc(title)
@@ -866,7 +913,9 @@ def line_chart(title, labels, values, kind, lo, hi, fmt, ticks=None):
     x = lambda i: L + (W - L - R) * (i / (n - 1) if n > 1 else 0.5)
     y = lambda v: T + (H - T - B) * (1 - (min(max(v, lo), hi) - lo) / float(hi - lo))
     s = ["<svg viewBox='0 0 %d %d' role='img' aria-label='%s'>" % (W, H, esc(title))]
-    for a, b, col in BANDS.get(kind, []):
+    key = {"srv": "serve", "pass": "pass", "hit": "hit"}.get(kind)
+    bands = [] if not (cuts and key) else [(min(lo, cuts[key][0]), cuts[key][0], BAND_COL[0]), (cuts[key][0], cuts[key][1], BAND_COL[1]), (cuts[key][1], max(hi, cuts[key][1]), BAND_COL[2])]
+    for a, b, col in bands:
         a, b = max(a, lo), min(b, hi)
         if b > a:
             s.append("<rect x='%d' y='%.1f' width='%d' height='%.1f' fill='%s'/>" % (L, y(b), W - L - R, y(a) - y(b), col))
@@ -958,15 +1007,23 @@ def players_report(conn, q):
     cols = ["Date", "Opponent", "Tournament"] + STAT_COLS
     rows = [[fmt_date(m["date"]), m["opponent"], m["event"]] + stat_vals(t) for m, t in zip(played, per)]
     foot = ["Total", "%d match%s" % (len(played), "" if len(played) == 1 else "es"), ""] + stat_vals(tot)
+    cuts = team_cuts(conn, e["team_id"])
+    pfmt = lambda v: ("%.2f" % v).rstrip("0").rstrip(".") or "0"
+    gauges = "<div class='gauges'>%s%s</div>" % (
+        gauge_svg("Serve %", tot["srv"], 0, 100, cuts["serve"], lambda v: "%d%%" % round(v),
+                  ("%d serves · %d aces · %d out" % (tot["serves"], tot["aces"], tot["out"])) if tot["serves"] else "No serves yet"),
+        gauge_svg("Serve receive", tot["pass"], 0, 3, cuts["pass"], pfmt,
+                  ("average of %d passes (0–3)" % tot["passes"]) if tot["passes"] else "No passes yet"))
     head = card(None, "<div class='pc-head'><span class='pc-num'>%s</span><div><h2>%s</h2><p class='muted'>%s%s</p></div></div>" % (
         esc(e["number"]), esc(pname(e)), esc(e["team"]), (" · " + esc(e["position"])) if e["position"] else "") +
         kpis([("Serve %", pct(tot["srv"])), ("Avg pass", avgf(tot["pass"])), ("Hit %", hitf(tot["hit"])),
-              ("Aces", tot["aces"]), ("Kills", tot["kills"]), ("Blocks", halves(tot["blocks"]))]))
+              ("Aces", tot["aces"]), ("Kills", tot["kills"]), ("Blocks", halves(tot["blocks"]))]) + gauges +
+        "<p class='muted'>Gauge colours follow the team's colour levels (set on the Team app's Team page).</p>")
     hits = [t["hit"] for t in per if t["hit"] is not None]
     charts = card("Match by match", "<div class='charts'>%s%s%s</div>" % (
-        line_chart("Serve %", labels, [t["srv"] for t in per], "srv", 0, 100, lambda v: "%d%%" % round(v), PCT_TICKS),
-        line_chart("Average pass (0–3)", labels, [t["pass"] for t in per], "pass", 0, 3, lambda v: "%.1f" % v, PASS_TICKS),
-        line_chart("Hitting %", labels, [t["hit"] for t in per], "hit", *hit_range(hits)[:2], hitf, hit_range(hits)[2])))
+        line_chart("Serve %", labels, [t["srv"] for t in per], "srv", 0, 100, lambda v: "%d%%" % round(v), PCT_TICKS, cuts),
+        line_chart("Average pass (0–3)", labels, [t["pass"] for t in per], "pass", 0, 3, lambda v: "%.1f" % v, PASS_TICKS, cuts),
+        line_chart("Hitting %", labels, [t["hit"] for t in per], "hit", *hit_range(hits)[:2], hitf, hit_range(hits)[2], cuts)))
     back = "<p class='noprint'><a href='/report/players?%s'>&lsaquo; All players</a></p>" % qs(q, p="")
     return out("/report/players", f, "Player card: %s" % pname(e), [head, charts, card("Every match", table_block(cols, rows, foot))],
                [("", cols, rows, foot)], back, hidden={"p": rid}, printable=True)
@@ -1113,12 +1170,13 @@ def trends_report(conn, q):
                      t["serves"], pct(t["srv"]), t["passes"], avgf(t["pass"]), t["ta"], hitf(t["hit"]), len(rc), pct(sop)])
     cols = ["Date", "Opponent", "Tournament", "Result", "Serves", "Serve %", "Passes", "Avg pass", "Attempts", "Hit %", "Receiving", "Side-out %"]
     hs = [v for v in hit if v is not None]
+    cuts = team_cuts(conn, f.team)
     charts = "<div class='charts'>%s%s%s%s</div>" % (
-        line_chart("Team serve %", labels, srv, "srv", 0, 100, lambda v: "%d%%" % round(v), PCT_TICKS),
-        line_chart("Team average pass (0–3)", labels, pas, "pass", 0, 3, lambda v: "%.1f" % v, PASS_TICKS),
-        line_chart("Team hitting %", labels, hit, "hit", *hit_range(hs)[:2], hitf, hit_range(hs)[2]),
+        line_chart("Team serve %", labels, srv, "srv", 0, 100, lambda v: "%d%%" % round(v), PCT_TICKS, cuts),
+        line_chart("Team average pass (0–3)", labels, pas, "pass", 0, 3, lambda v: "%.1f" % v, PASS_TICKS, cuts),
+        line_chart("Team hitting %", labels, hit, "hit", *hit_range(hs)[:2], hitf, hit_range(hs)[2], cuts),
         line_chart("Side-out % (point-by-point matches)", labels, so, "", 0, 100, lambda v: "%d%%" % round(v), PCT_TICKS))
-    note = "<p class='muted'>One point per match, oldest on the left. Shading: red, amber and green use the same cut-offs as the Board in the app.</p>"
+    note = "<p class='muted'>One point per match, oldest on the left. Shading: red, amber and green use the team's colour levels (set on the Team app's Team page), the same as the Board and the gauges.</p>"
     return out("/report/trends", f, "Trends", [card(None, charts), card("Match by match", table_block(cols, rows))], [("", cols, rows, None)], note, printable=True)
 
 

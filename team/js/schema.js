@@ -2,10 +2,13 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.5.2";
+export const APP_VERSION = "v1.6";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.6", ["Colour levels per team (More → Team, and when you create a team): Young, Intermediate, Advanced or Custom, for how strict red, yellow and green are.",
+            "Tap a player on Stats for her card: serve % and serve receive on gauges, with a needle at the exact value.",
+            "Rotation tab: Court vs. plan lists where the court doesn't match your planned swaps, with a Fix button."]],
   ["v1.5.2", ["Court positions no longer carry fixed roles (the setter can start anywhere); each box shows the player's own position from the roster.",
               "On the wheel, the libero's slice shows whom she is covering."]],
   ["v1.5.1", ["Fixed: when the libero rotates from 5 to 4 and is planned to come in at 1 on the same rotate, she now leaves at 4 and comes in at 1.",
@@ -36,7 +39,7 @@ export const SYNC_FORMAT_VERSION = 1;
 export const COMMON = ["id", "created_at", "updated_at", "device", "deleted"];
 
 export const TABLES = {
-  teams:     ["name", "season", "notes"],
+  teams:     ["name", "season", "notes", "levels"],
   staff:     ["team_id", "role", "first", "last", "phone", "email"],
   players:   ["first", "last", "number", "position", "age", "birth_date", "notes"],
   roster:    ["team_id", "player_id", "number", "position", "rot"],
@@ -55,8 +58,6 @@ export const TABLES = {
   scout_passes:  ["match_id", "scout_team_id", "scout_player_id", "rating", "tap"],
 };
 
-// Match-day board colours: below the first number is red, below the second amber, otherwise green.
-export const BOARD_CUTS = { pass: [1.5, 2.0], serve: [70, 85], hit: [0, 0.15] };
 
 export const POSITIONS = ["Setter", "Pin", "Middle", "Right Side", "Libero", "DS"];
 export const ROT_COUNTS = ["", "3", "6"];

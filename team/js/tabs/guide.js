@@ -128,7 +128,7 @@ First3,Last3,3,Libero,12,12U Blue</pre>
   <li>The front-row player comes back automatically when her spot rotates to the front row (position 4). The libero always leaves before the front row.</li>
   <li>From then on, <b>Rotate</b>, side outs and losing the serve make those subs for you and show what happened, with <b>OK</b> or <b>Undo these subs</b>.</li>
 </ol>
-<p><b>The libero doesn't serve</b> unless you choose "To serve" for her (for one player at most). Libero swaps don't count toward the 15 substitutions; others do, and planned subs are skipped once all 15 are used. Each new set starts with the same plan, and a <b>new match starts with the plan your team used last</b>. The Serve and Receive tabs also have a <b>Rotate</b> button (in every-point matches that already rotate on side outs, it asks first). Subs you make by hand are respected: a planned swap is skipped if a player isn't where the plan expects. <b>Next Rotate</b> under the wheel shows what the next Rotate will do.</p>`],
+<p><b>The libero doesn't serve</b> unless you choose "To serve" for her (for one player at most). Libero swaps don't count toward the 15 substitutions; others do, and planned subs are skipped once all 15 are used. Each new set starts with the same plan, and a <b>new match starts with the plan your team used last</b>. The Serve and Receive tabs also have a <b>Rotate</b> button (in every-point matches that already rotate on side outs, it asks first). Subs you make by hand are respected: a planned swap is skipped if a player isn't where the plan expects. <b>Next Rotate</b> under the wheel shows what the next Rotate will do. <b>Court vs. plan</b> lists anywhere the players on the court don't match the plan (for example a sub still in the front row) with a <b>Fix</b> button.</p>`],
 
 ["work", "Work rotation", `
 <p>When your team works as officials (score keeper, libero tracker, scoreboard, line judges, swing helper), More → <b>Work</b> keeps the jobs fair.</p>
@@ -151,6 +151,8 @@ First3,Last3,3,Libero,12,12U Blue</pre>
   <li><b>Block &amp; set:</b> solo blocks, block assists, total blocks (solo + half of each assist), block errors, set assists and set errors.</li>
   <li><b>Playing time:</b> sets, rotations and rallies on the court for each player, and her share of all rallies. Players well below the team's middle player are shaded. This is your record if a parent asks about playing time; it's counted from the Court tab, so keep the lineup current during matches.</li>
 </ul>
+<p><b>Player card:</b> tap a player's name for her card: <b>Serve %</b> and <b>Serve receive</b> on gauges (red, yellow, green, with a needle at the exact value) plus her other numbers, for the season, a match or a set.</p>
+<p><b>Colour levels:</b> how strict red, yellow and green are depends on the team. Choose <b>Young / developing</b>, <b>Intermediate</b>, <b>Advanced</b> or <b>Custom</b> when you create a team or on <b>More → Team</b>. The gauges, the Board, scouting and Home Base's charts all follow it, and it goes to the other coaches in the setup file.</p>
 <p><b>Copy for email</b> copies the table you're looking at; paste it into an email. <b>Export to Excel</b> saves every recorded tap as a CSV file.</p>`],
 
 ["sync", "Syncing with Home Base and other coaches", `
