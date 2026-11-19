@@ -4,7 +4,7 @@ import { $$ } from "../ui.js";
 
 const SECTIONS = [
 ["what", "What the app does", `
-<p>The Team app tracks your volleyball team on your phone (iPhone or Android): the roster, the season schedule, and serve and serve-receive stats during matches. Each coach can use it on their own phone. A program on your PC called <b>Home Base</b> keeps the master database for the whole club and collects everyone's data.</p>
+<p>The Team app tracks your volleyball team on your phone (iPhone or Android): the roster, the season schedule, and serve and serve-receive stats during matches. Each coach can use it on their own phone. A program on your PC called <b>Home Base</b> keeps the master database for the whole club and collects everyone's data. It's optional; to set it up, see <a href="https://pbbergs.github.io/Volleyball-Tools/home-base/" target="_blank" rel="noopener">Get Home Base</a>.</p>
 <ul>
   <li><b>Serve:</b> Ace, In, Out for each serve.</li>
   <li><b>Receive:</b> rate each pass 0, 1, 2 or 3 (3 = perfect, 2 = good, 1 = poor but playable, 0 = shanked, overpassed or aced).</li>

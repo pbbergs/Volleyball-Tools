@@ -5,6 +5,7 @@ import { qrSvg } from "../qr.js";
 import { $, esc, toast } from "../ui.js";
 
 const PUBLIC_URL = "https://pbbergs.github.io/Volleyball-Tools/team/";
+const HB_URL = "https://pbbergs.github.io/Volleyball-Tools/home-base/";
 const appUrl = () => (/^https:$/.test(location.protocol) ? new URL("./", location.href).href : PUBLIC_URL);
 
 export function render(main) {
@@ -24,6 +25,7 @@ export function render(main) {
         <li>Open <b>Team</b> from the Home Screen and give the phone a name.</li>
         <li>To load your team: send them the setup file from Home Base (Dashboard → <b>Download setup file</b>), or your phone's data from <b>More → Sync → Export</b>. They import it on <b>More → Sync → Import file</b>.</li>
       </ol>
+      <p class="small" style="margin:0">Running Home Base for the club? Setup steps and downloads: <a href="${esc(HB_URL)}" target="_blank" rel="noopener">${esc(HB_URL.replace(/^https:\/\//, ""))}</a></p>
       <p class="muted small" style="margin:0">The code only carries the app's address. Team data goes only to the people you send it to.</p>
     </section>`;
   $("#share-link", main).onclick = async () => {
