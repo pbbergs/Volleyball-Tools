@@ -2,10 +2,12 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.6.3";
+export const APP_VERSION = "v1.7";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.7", ["The app now asks for the team password each time it opens (and after 5 minutes away). Ask your head coach for it.",
+            "The Volleyball Tools pages ask search engines not to list them."]],
   ["v1.6.3", ["Guide: a new section, Using the app for another team or club.",
               "Home Base installs with one line in PowerShell (see Get Home Base or the Guide), with a Desktop shortcut.",
               "The Volleyball Tools page opens with a volleyball flying at you. Tap the title to see it again."]],

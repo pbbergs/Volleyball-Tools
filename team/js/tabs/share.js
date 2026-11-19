@@ -22,7 +22,7 @@ export function render(main) {
       <ol class="share-steps">
         <li><b>iPhone:</b> it opens in Safari. Tap <b>Share</b> → <b>Add to Home Screen</b> → <b>Add</b>.</li>
         <li><b>Android:</b> it opens in Chrome. Tap <b>⋮</b> → <b>Install app</b>.</li>
-        <li>Open <b>Team</b> from the Home Screen and give the phone a name.</li>
+        <li>Open <b>Team</b> from the Home Screen, enter the <b>team password</b> (tell them yourself, not in the same message as the link), and give the phone a name.</li>
         <li>To load your team: send them the setup file from Home Base (Dashboard → <b>Download setup file</b>), or your phone's data from <b>More → Sync → Export</b>. They import it on <b>More → Sync → Import file</b>.</li>
       </ol>
       <p class="small" style="margin:0">Running Home Base for the club? Setup steps and downloads: <a href="${esc(HB_URL)}" target="_blank" rel="noopener">${esc(HB_URL.replace(/^https:\/\//, ""))}</a></p>

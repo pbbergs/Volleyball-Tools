@@ -30,6 +30,7 @@ const SECTIONS = [
   <li>Tap the <b>⋮</b> menu, then <b>Install app</b> (or <b>Add to Home screen</b> → <b>Install</b>).</li>
   <li>Open <b>Team</b> from the Home screen. It opens full screen like any other app, and syncs with Home Base and the other phones the same way.</li>
 </ol>
+<p><b>Team password:</b> the app asks for it each time it opens, and again when you come back after 5 minutes or more. Capital letters don't matter. Your head coach gives it to you. It's a simple lock to keep strangers out, not a vault: your data never leaves your phone and your own PC either way.</p>
 <p>After you've opened it once, the app works with no internet at the gym. When a new version is posted, a bar at the bottom says <b>New version available</b>; tap <b>Update</b>. Your data stays. To check right away, use <b>More → Check for updates</b>.</p>
 <p><b>Version numbers</b> (top of the screen) work like v1.2.3: the first number changes for a big release (v2.0 will be the App Store version), the middle one for a new feature, and the last one for a small fix. Home Base on the PC has its own number in the same style. After an update the app shows <b>What's new</b> once; tap the version number any time to see it again.</p>`],
 
