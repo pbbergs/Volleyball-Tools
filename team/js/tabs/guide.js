@@ -30,7 +30,7 @@ const SECTIONS = [
   <li>Tap the <b>⋮</b> menu, then <b>Install app</b> (or <b>Add to Home screen</b> → <b>Install</b>).</li>
   <li>Open <b>Team</b> from the Home screen. It opens full screen like any other app, and syncs with Home Base and the other phones the same way.</li>
 </ol>
-<p>After you've opened it once, the app works with no internet at the gym. When a new version is posted, a bar at the bottom says <b>New version available</b>; tap <b>Update</b>. Your data stays.</p>
+<p>After you've opened it once, the app works with no internet at the gym. When a new version is posted, a bar at the bottom says <b>New version available</b>; tap <b>Update</b>. Your data stays. To check right away, use <b>More → Check for updates</b>.</p>
 <p><b>Version numbers</b> (top of the screen) work like v1.2.3: the first number changes for a big release (v2.0 will be the App Store version), the middle one for a new feature, and the last one for a small fix. Home Base on the PC has its own number in the same style. After an update the app shows <b>What's new</b> once; tap the version number any time to see it again.</p>`],
 
 ["terms", "Free, open source, and the terms", `
@@ -91,7 +91,7 @@ First3,Last3,3,Libero,12,12U Blue</pre>
   <li><b>Lineup:</b> tap a bench player, then a position. If someone was there she goes to the bench; that's a substitution (filling an empty spot isn't). Tap a player on the court to select her, then <b>Take off court</b>.</li>
   <li><b>Positions:</b> the court is numbered 1 to 6 (1 is the server, back right); positions carry no role, since any player can start anywhere. Each box shows the player and her own position from the roster (Setter, Pin, Middle…).</li>
   <li><b>Rotate</b> moves everyone clockwise (4→3, 3→2, 2→1, 1→6, 6→5, 5→4). In point-by-point matches the court rotates by itself when you win a rally on their serve (a side out). Turn that off with <b>Rotate on side outs</b>.</li>
-  <li><b>Rotate back</b> moves everyone one spot the other way (1→2 … 6→1), for fixing a lineup that got ahead. It asks nothing and counts nothing.</li>
+  <li><b>Rotate back</b> moves everyone one spot the other way (1→2 … 6→1), for fixing a lineup that got ahead. Right after a Rotate that made planned subs, it undoes those subs too, so everyone is back exactly where they were.</li>
   <li><b>Undo lineup change</b> steps back through lineup changes, restoring the substitution count too. It never removes recorded stats.</li>
   <li><b>Substitutions:</b> 15 per set, shown at the top. Changes involving the libero don't count. After 15, counted substitutions are blocked.</li>
   <li><b>Libero in the front row:</b> a red notice appears and Rotate is off until you bring someone in for her: just tap a bench player.</li>

@@ -101,7 +101,7 @@ export function render(main, ctx) {
   };
   $("#rot", main).onclick = () => { const r = court.rotate(m, s); if (r.error) say(r.error); selPos = null; go(); if (!r.error) showSwaps(m, r, ctx); };
   $("#to-plan", main).onclick = () => ctx.go("rotation");
-  $("#rotb", main).onclick = () => { court.rotateBack(m, s); selPos = null; go(); };
+  $("#rotb", main).onclick = () => { const r = court.rotateBack(m, s); selPos = null; go(); if (r.undidSubs) toast("Rotated back. The planned subs from that rotate were undone too."); };
   $("#off", main).onclick = () => { if (selPos) court.takeOff(m, s, selPos); selPos = null; go(); };
   $("#und", main).onclick = () => { court.undoLineup(m, s); armed = null; selPos = null; go(); };
   $("#p-keep", main) && ($("#p-keep", main).onclick = () => { court.dismissPrompt(m, s); go(); });

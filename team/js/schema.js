@@ -2,10 +2,12 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.6";
+export const APP_VERSION = "v1.6.1";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.6.1", ["Check for updates: on the More menu and on About & terms, it tells you right away whether a new version is out.",
+              "Rotate back right after a Rotate that made planned subs now undoes those subs too, so everyone is back exactly where they were."]],
   ["v1.6", ["Colour levels per team (More → Team, and when you create a team): Young, Intermediate, Advanced or Custom, for how strict red, yellow and green are.",
             "Tap a player on Stats for her card: serve % and serve receive on gauges, with a needle at the exact value.",
             "Rotation tab: Court vs. plan lists where the court doesn't match your planned swaps, with a Fix button."]],

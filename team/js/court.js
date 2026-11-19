@@ -44,8 +44,8 @@ export function dispRole(m, s, pos) {
   return model.isLibero(m.team_id, pid) ? "Libero" : model.teamPos(m.team_id, pid) || "";
 }
 
-function remember(s, tap = null) {
-  s.hist.push({ lineup: { ...s.lineup }, roles: { ...s.roles }, subs: s.subs, rot: s.rot, libFor: s.libFor, tap });
+function remember(s, tap = null, kind = null) {
+  s.hist.push({ lineup: { ...s.lineup }, roles: { ...s.roles }, subs: s.subs, rot: s.rot, libFor: s.libFor, tap, kind });
   if (s.hist.length > 30) s.hist.shift();
 }
 function log(m, s, event, pos, pid, tap = null) {
@@ -133,7 +133,7 @@ export function previewRotate(m, s) {
 function planned(s, pid) { return !!pairFor(s, pid); }
 // The planned subs that just happened become their own step, so "Undo" on the popup reverses only them.
 function planStep(m, s, triggers, tap) {
-  remember(s, tap);
+  remember(s, tap, "plan");
   const r = applyPlan(m, s, triggers, tap);
   if (!r.swaps.length) s.hist.pop();
   return r;
@@ -177,7 +177,7 @@ export function takeOff(m, s, pos) {
 // Clockwise: 4->3, 3->2, 2->1, 1->6, 6->5, 5->4. Roles move with their slot.
 export function rotate(m, s, tap = null) {
   if (liberoFront(m, s)) return { error: "Rotate is off while the libero is in the front row." };
-  remember(s, tap);
+  remember(s, tap, "rotate");
   const L = s.lineup, R = s.roles;
   s.lineup = { 1: L[2], 2: L[3], 3: L[4], 4: L[5], 5: L[6], 6: L[1] };
   s.roles = { 1: R[2], 2: R[3], 3: R[4], 4: R[5], 5: R[6], 6: R[1] };
@@ -204,6 +204,17 @@ export function rotate(m, s, tap = null) {
 // Counterclockwise, one spot back: 1->2, 2->3, 3->4, 4->5, 5->6, 6->1. For fixing a lineup that got ahead;
 // no prompts, and allowed even with the libero in the front row (it can move her back out).
 export function rotateBack(m, s) {
+  // Right after a Rotate that made planned subs, Rotate back undoes both: everyone (subs included) is back
+  // exactly where they were, and the subs no longer count.
+  const n = s.hist.length, top = s.hist[n - 1], prev = s.hist[n - 2];
+  if (top?.kind === "plan" && prev?.kind === "rotate") {
+    const h = prev;
+    s.hist.length = n - 2;
+    Object.assign(s, { lineup: h.lineup, roles: h.roles, subs: h.subs, rot: h.rot, libFor: h.libFor ?? null, prompts: [] });
+    log(m, s, "rotate_back", null, null);
+    save(m, s);
+    return { ok: true, undidSubs: true };
+  }
   remember(s);
   const L = s.lineup, R = s.roles;
   s.lineup = { 1: L[6], 2: L[1], 3: L[2], 4: L[3], 5: L[4], 6: L[5] };

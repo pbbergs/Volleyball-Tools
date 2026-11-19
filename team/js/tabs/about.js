@@ -22,10 +22,23 @@ export function render(main, ctx) {
       <div class="row"><button class="btn" type="button" id="full">Read the full terms</button></div>
     </section>
     <section class="card">
+      <h3>Updates</h3>
+      <p class="small" style="margin:0">The app checks by itself whenever you open it. Check now to be sure, for example right after a new version was published.</p>
+      <div class="row"><button class="btn" type="button" id="chk">Check for updates</button></div>
+      <p class="small" id="chk-out" role="status" style="margin:0"></p>
+    </section>
+    <section class="card">
       <h3>The welcome</h3>
       <p class="small" style="margin:0">See the introduction again: what the app does, installing it on the Home Screen, and the terms.</p>
       <div class="row"><button class="btn" type="button" id="replay">Replay the welcome</button></div>
     </section>`;
   $("#full", main).onclick = showFullTerms;
   $("#replay", main).onclick = () => ctx.go("welcome");
+  $("#chk", main).onclick = async () => {
+    const b = $("#chk", main), out = $("#chk-out", main);
+    b.disabled = true; out.textContent = "Checking…";
+    const r = await ctx.checkNow();
+    out.textContent = ctx.updateMessage(r); out.className = "small " + (r.state === "current" ? "ok-txt" : r.state === "new" ? "new-txt" : "muted");
+    b.disabled = false;
+  };
 }

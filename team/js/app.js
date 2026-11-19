@@ -49,6 +49,7 @@ const ctx = {
   go(v) { if (location.hash !== "#" + v) location.hash = v; else show(v); },
   refresh() { show(view); },
   get view() { return view; },
+  checkNow: () => checkNow(), updateMessage: r => updateMessage(r),
 };
 
 function show(v) {
@@ -81,21 +82,40 @@ export const FILES = ["./", "./index.html", "./styles.css", "./icon.png", "./ico
   "./js/tabs/more.js", "./js/tabs/guide.js", "./js/tabs/court.js", "./js/tabs/work.js", "./js/tabs/links.js",
   "./js/tabs/board.js", "./js/tabs/scout.js", "./js/tabs/share.js", "./js/qr.js", "./js/tabs/about.js", "./js/welcome.js", "./js/terms.js", "./js/tabs/rotation.js", "./js/planui.js", "./js/levels.js", "./js/gauge.js"];
 const hosted = /^https?:$/.test(location.protocol);
-async function serverVersion() {
+async function siteVersions() {
   const [a, b] = await Promise.all([
     fetch("./index.html", { cache: "reload" }).then(r => (r.ok ? r.text() : "")),
     fetch("./js/schema.js", { cache: "reload" }).then(r => (r.ok ? r.text() : "")),
   ]);
-  const v1 = a.match(/id="ver">(v[\w.]+)</)?.[1], v2 = b.match(/APP_VERSION = "(v[\w.]+)"/)?.[1];
-  return v1 && v1 === v2 ? v1 : null;
+  return { page: a.match(/id="ver">(v[\w.]+)</)?.[1] || null, code: b.match(/APP_VERSION = "(v[\w.]+)"/)?.[1] || null };
 }
+const showBar = v => { $("#update-text").textContent = `New version available (${v})`; $("#update").hidden = false; };
 async function checkForUpdate() {
   if (!hosted || document.visibilityState !== "visible") return;
   try {
-    const v = await serverVersion();
-    if (v && v !== APP_VERSION) { $("#update-text").textContent = `New version available (${v})`; $("#update").hidden = false; }
+    const { page, code } = await siteVersions();
+    if (page && page === code && page !== APP_VERSION) showBar(page);
   } catch {}
 }
+// "Check for updates" (More, and More -> About & terms): says what it found instead of staying quiet.
+// -> { state: "current" | "new" | "publishing" | "offline" | "local", version }
+export async function checkNow() {
+  if (!hosted) return { state: "local" };
+  let r;
+  try { r = await siteVersions(); } catch { return { state: "offline" }; }
+  if (!r.page && !r.code) return { state: "offline" };
+  if (r.page !== r.code) return { state: "publishing", version: [r.page, r.code].find(v => v && v !== APP_VERSION) || r.code };
+  if (r.page === APP_VERSION) return { state: "current", version: APP_VERSION };
+  showBar(r.page);
+  return { state: "new", version: r.page };
+}
+export const updateMessage = r => ({
+  current: `You're up to date (${APP_VERSION}).`,
+  new: `${r.version} is available. Tap Update at the bottom of the screen.`,
+  publishing: `A new version${r.version ? " (" + r.version + ")" : ""} is still being published. Try again in a minute or two.`,
+  offline: "Couldn't reach the web site. Check the internet connection and try again.",
+  local: "This copy isn't running from the web site, so there's nothing to check.",
+}[r.state]);
 $("#update-btn").addEventListener("click", async () => {
   const btn = $("#update-btn"); btn.disabled = true; btn.textContent = "Updating…";
   try {

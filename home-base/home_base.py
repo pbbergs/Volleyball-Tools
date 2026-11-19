@@ -28,7 +28,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, quote
 
-VERSION = "1.3"
+VERSION = "1.3.1"
 PORT = 8770
 HERE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(HERE, "volleyball.db")
@@ -495,7 +495,8 @@ def dashboard():
     counts = [{"table": t, "rows": conn.execute('SELECT COUNT(*) FROM "%s" WHERE deleted = 0' % t).fetchone()[0]} for t in sync_tables(conn)]
     log = [dict(r) for r in conn.execute("SELECT at, device, file, added, updated, skipped FROM _import_log ORDER BY at DESC LIMIT 15")]
     conn.close()
-    body = """<section class='card' id='upd'><h2>Home Base updates</h2><p id='upd-msg' class='muted'>Checking for a newer version&hellip;</p></section>
+    body = """<section class='card' id='upd'><h2>Home Base updates</h2><p id='upd-msg' class='muted'>Checking for a newer version&hellip;</p>
+      <button class='btn alt' id='upd-again'>Check again</button></section>
     <section class='card'><h2>Import a sync file</h2>
       <p>Choose a sync file a coach exported from the Team app. Newer changes win; importing the same file twice changes nothing.</p>
       <input type='file' id='f' accept='.json' multiple> <button class='btn' id='go'>Import</button>
@@ -553,8 +554,9 @@ def dashboard():
       await fetch('/api/logo', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({value: null})});
       location.reload();
     };
-    (async () => {
+    const checkUpd = async () => {
       const m = document.getElementById('upd-msg');
+      m.textContent = 'Checking for a newer version\u2026';
       try {
         const r = await (await fetch('/api/update-check')).json();
         if (!r.ok) { m.textContent = 'You have v' + r.current + '. ' + r.error; return; }
@@ -573,7 +575,9 @@ def dashboard():
           setTimeout(wait, 2500);
         };
       } catch (e) { m.textContent = "Couldn't check for updates."; }
-    })();
+    };
+    checkUpd();
+    document.getElementById('upd-again').onclick = checkUpd;
     document.getElementById('logo-icon').onclick = async () => {
       if (!LOGO) { lout.innerHTML = "<p class='bad'>Save a logo first.</p>"; return; }
       const img = new Image(); img.onload = () => {

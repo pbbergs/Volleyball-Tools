@@ -1,6 +1,6 @@
 // The More menu.
 
-import { $$, esc } from "../ui.js";
+import { $$, esc, toast } from "../ui.js";
 
 const ITEMS = [
   ["court", "Court", "Lineup, rotation, substitutions and the libero"],
@@ -11,7 +11,8 @@ const ITEMS = [
   ["stats", "Stats", "Serve, pass, attack, block, set and playing time"],
   ["sync", "Sync", "Send data to Home Base, or bring in a file"],
   ["guide", "Guide", "How to set up and use the app"],
-  ["about", "About & terms", "Version, open-source license, terms of use, replay the welcome"],
+  ["update", "Check for updates", "See right away whether a new version is out"],
+  ["about", "About & terms", "Version, check for updates, open-source license, terms of use, replay the welcome"],
   ["work", "Work", "Officiating duties and the rotation"],
   ["links", "Links", "Your helpful links"],
   ["share", "Share the app", "QR code and link to put the app on another coach's phone"],
@@ -22,5 +23,9 @@ export function render(main, ctx) {
     <button type="button" class="item" ${v ? `data-v="${v}"` : "disabled"} style="${v ? "" : "opacity:.5;cursor:default"}">
       <span class="main-txt"><b>${esc(t)}</b><span class="sub">${esc(d)}</span></span>${v ? `<span class="chev">›</span>` : ""}</button>`).join("")}
     </div></section>`;
-  for (const b of $$("[data-v]", main)) b.onclick = () => ctx.go(b.dataset.v);
+  for (const b of $$("[data-v]", main)) b.onclick = async () => {
+    if (b.dataset.v !== "update") return ctx.go(b.dataset.v);
+    const sub = b.querySelector(".sub"); sub.textContent = "Checking…";
+    const r = await ctx.checkNow(); sub.textContent = ctx.updateMessage(r); toast(ctx.updateMessage(r));
+  };
 }
