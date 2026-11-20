@@ -167,7 +167,7 @@ First3,Last3,3,Libero,12U Blue</pre>
 <p><b>Phone to PC (after each match or tournament):</b></p>
 <ol>
   <li>More → Sync → <b>Export sync file</b>.</li>
-  <li>Send it to yourself: Mail or Outlook, or <b>Save to Files</b> into OneDrive.</li>
+  <li>Send it to yourself: AirDrop, Mail or Outlook. Once Home Base has it, delete the file from the phone and from your mail: it holds players' names.</li>
   <li>In Home Base on the PC, import it (or save it into Home Base's <b>inbox</b> folder).</li>
 </ol>
 <p><b>PC to phones (to share the roster and schedule):</b></p>
@@ -181,7 +181,7 @@ First3,Last3,3,Libero,12U Blue</pre>
 <ol>
   <li>Install Python 3 from python.org. On the first installer screen, tick <b>Add python.exe to PATH</b>.</li>
   <li><b>Quickest:</b> open PowerShell and run <code>irm https://pbbergs.github.io/Volleyball-Tools/home-base/install.txt | iex</code>. It sets up <code>C:\vb-home-base</code> and a Desktop shortcut. Or follow the steps on the <a href="https://pbbergs.github.io/Volleyball-Tools/home-base/" target="_blank" rel="noopener">Get Home Base</a> page.</li>
-  <li>Doing it by hand: put the <code>vb-home-base</code> folder somewhere permanent, such as Documents.</li>
+  <li>Doing it by hand: put the <code>vb-home-base</code> folder somewhere permanent on the PC itself, such as <code>C:\vb-home-base</code>. Keep it out of OneDrive and other cloud-synced folders (including Documents or Desktop if OneDrive backs them up): the database holds players' names.</li>
   <li>Double-click <code>start-home-base.bat</code>. Leave the black window open; your browser opens Home Base at <code>http://localhost:8770</code>.</li>
   <li>The Dashboard imports files, downloads setup files, and lists recent imports. The tabs across the top hold the reports: season stats, player cards, match reports, rotations, trends, playing time, results, schedule, work and scouting, each with filters, Excel download and print.</li>
   <li><b>Updates:</b> the Dashboard says when a new Home Base is available; click <b>Update now</b>. It backs up the database and the old program first, then restarts itself.</li>

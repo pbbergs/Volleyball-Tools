@@ -1,7 +1,7 @@
-/* Volleyball Team app. Same look as the other Volleyball Tools: navy header, court-grey page, white cards. */
+/* Volleyball Team app. Club colours (red, gray, black, white), the same look as the other Volleyball Tools: black header, light-gray page, white cards, red buttons. */
 :root {
-  --bg: #eef1f4; --surface: #ffffff; --ink: #17202b; --muted: #5d6877; --line: #d9dfe6;
-  --head: #13263d; --head-ink: #e8eef6; --accent: #1a6fb5; --press: #e3eef8;
+  --bg: #eef0f1; --surface: #ffffff; --ink: #18191c; --muted: #5f636a; --line: #d9dbde;
+  --head: #17181b; --head-ink: #f1f1f2; --accent: #c8102e; --press: #f9e2e5;
   --green: #16803c; --blue: #1f5fbf; --orange: #c2620a; --red: #b91c1c; --flag: #fde0e0;
   --font-display: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
   --font-body: "Barlow", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -9,8 +9,8 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0f151c; --surface: #18212b; --ink: #e6ebf1; --muted: #93a0b0; --line: #2a3644;
-          --head: #0a1018; --head-ink: #e6ebf1; --accent: #5aa6e8; --press: #213245; --flag: #5a2a2e; color-scheme: dark; }
+  :root { --bg: #111214; --surface: #1c1d20; --ink: #ececee; --muted: #9a9ea6; --line: #2f3135;
+          --head: #0b0b0c; --head-ink: #ececee; --accent: #e23a50; --press: #3b1e23; --flag: #5a2a2e; color-scheme: dark; }
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -324,7 +324,7 @@ body.onboarding .tabbar, body.onboarding .update { display: none; }
 .wheel-wrap { min-width: 0; overflow: hidden; }
 .w-slice { stroke: #ffffff; stroke-width: 4; cursor: pointer; }
 .w-white .w-slice { stroke: #c9d1da; stroke-width: 2; }
-.wheel .w-white text { fill: #17202b; }
+.wheel .w-white text { fill: #18191c; }
 .w-slice:active { opacity: .6; }
 .wheel text { pointer-events: none; fill: #fff; font-family: var(--font-body); }
 .w-name { font-weight: 700; font-size: 15px; }

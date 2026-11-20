@@ -5,21 +5,21 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Get Home Base</title>
-<meta name="theme-color" content="#13263d">
+<meta name="theme-color" content="#17181b">
 <link rel="icon" href="../team/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
 :root {
-  --bg: #eef1f4; --surface: #ffffff; --ink: #17202b; --muted: #5d6877; --line: #d9dfe6;
-  --head: #13263d; --head-ink: #e8eef6; --accent: #1a6fb5; --code: #e8edf2; --warn: #fdf1e2;
+  --bg: #eef0f1; --surface: #ffffff; --ink: #18191c; --muted: #5f636a; --line: #d9dbde;
+  --head: #17181b; --head-ink: #f1f1f2; --accent: #c8102e; --code: #eaebed; --warn: #fdf1e2;
   --font-display: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
   --font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0f151c; --surface: #18212b; --ink: #e6ebf1; --muted: #93a0b0; --line: #2a3644;
-          --head: #0a1018; --head-ink: #e6ebf1; --accent: #5aa6e8; --code: #223041; --warn: #3a2c18; color-scheme: dark; }
+  :root { --bg: #111214; --surface: #1c1d20; --ink: #ececee; --muted: #9a9ea6; --line: #2f3135;
+          --head: #0b0b0c; --head-ink: #ececee; --accent: #e23a50; --code: #26282c; --warn: #3a2c18; color-scheme: dark; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.55; }
@@ -81,7 +81,8 @@ a { color: var(--accent); }
     <ol>
       <li><p><b>Install Python</b> (free) from <a href="https://www.python.org/downloads/">python.org/downloads</a>, version 3.7 or newer.</p>
         <p class="note">On the first screen of the installer, tick <b>Add python.exe to PATH</b>, then click <b>Install Now</b>.</p></li>
-      <li><p><b>Make a folder</b> for Home Base, for example <code>C:\vb-home-base</code>. Your database will live in this folder, so pick somewhere permanent.</p></li>
+      <li><p><b>Make a folder</b> for Home Base, for example <code>C:\vb-home-base</code>. Your database will live in this folder, so pick somewhere permanent.</p>
+        <p class="note">Keep it <b>out of OneDrive</b>, Dropbox, Google Drive or iCloud, and out of Documents or Desktop if OneDrive backs those up. The database holds players' names, and a synced folder copies it to that company's cloud.</p></li>
       <li><p><b>Download the three files</b> into that folder:</p>
         <div class="dl">
           <a class="btn" href="home_base.py" download="home_base.py">home_base.py</a>

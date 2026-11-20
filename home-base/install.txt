@@ -20,6 +20,11 @@
   Write-Host ''
   Write-Host 'Volleyball Tools - Home Base installer' -ForegroundColor Cyan
   Write-Host "Folder: $dir"
+  if ($dir -match 'OneDrive|Dropbox|Google Drive|iCloud') {
+    Write-Host 'That folder is synced to the cloud. The database holds players'' names, so keep Home Base on the PC itself,' -ForegroundColor Yellow
+    Write-Host 'for example C:\vb-home-base. Remove $env:VB_HOME_BASE_DIR (or set it to another folder) and run this again.' -ForegroundColor Yellow
+    return
+  }
   Write-Host ''
 
   # 1. Python 3.7 or newer (skip the Microsoft Store placeholder, which isn't a real Python)

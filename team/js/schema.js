@@ -2,10 +2,12 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.8";
+export const APP_VERSION = "v1.9";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.9", ["The app is now in the club colours: red, gray, black and white, with a red app icon. The icon already on your Home Screen may keep its old colour, and that's fine: don't remove it just for the colour, because removing it can delete the app's data.",
+            "Guide: keep Home Base out of OneDrive and other cloud folders, and delete sync files from your phone and mail once Home Base has them."]],
   ["v1.8", ["Teams have an age group (10s to 18s) on More → Team. Players play in the age group of the team they're on.",
             "Players no longer have an age or birth date: the fields are gone and any stored ones were erased from this phone.",
             "Home Base can now import players from a CSV file too, with a template and a preview."]],

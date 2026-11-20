@@ -5,7 +5,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Volleyball Tools</title>
-<meta name="theme-color" content="#13263d">
+<meta name="theme-color" content="#17181b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Volleyball Tools">
@@ -15,17 +15,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
-/* Same look as the tools: navy scoreboard header, light court-grey page, one card per tool. */
+/* Same look as the tools, in the club colours: black header, light-gray page, one card per tool, red buttons. */
 :root {
-  --bg: #eef1f4; --surface: #ffffff; --ink: #17202b; --muted: #5d6877; --line: #d9dfe6;
-  --head: #13263d; --head-ink: #e8eef6; --accent: #1a6fb5;
+  --bg: #eef0f1; --surface: #ffffff; --ink: #18191c; --muted: #5f636a; --line: #d9dbde;
+  --head: #17181b; --head-ink: #f1f1f2; --accent: #c8102e;
   --font-display: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
   --font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0f151c; --surface: #18212b; --ink: #e6ebf1; --muted: #93a0b0; --line: #2a3644;
-          --head: #0a1018; --head-ink: #e6ebf1; --accent: #5aa6e8; color-scheme: dark; }
+  :root { --bg: #111214; --surface: #1c1d20; --ink: #ececee; --muted: #9a9ea6; --line: #2f3135;
+          --head: #0b0b0c; --head-ink: #ececee; --accent: #e23a50; color-scheme: dark; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.5; }
@@ -66,11 +66,11 @@ main { padding-block: 24px 48px; padding-left: max(20px, env(safe-area-inset-lef
 </head>
 <body>
 <!-- Intro: a volleyball flies at you and bursts (once per launch; tap to skip; off with Reduce Motion). Loaded first so the page never flashes before it. -->
-<script src="intro.js?v=1.5"></script>
+<script src="intro.js?v=1.6"></script>
 <header>
   <div class="in">
     <h1 id="title" title="Tap to see the intro again">Volleyball Tools</h1>
-    <p>Simple stat trackers for practice and tryouts. <span class="ver" id="ver">v1.5</span></p>
+    <p>Simple stat trackers for practice and tryouts. <span class="ver" id="ver">v1.6</span></p>
   </div>
 </header>
 

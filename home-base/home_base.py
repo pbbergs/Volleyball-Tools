@@ -28,7 +28,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, quote
 
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 PORT = 8770
 HERE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(HERE, "volleyball.db")
@@ -339,6 +339,100 @@ def save_copy(raw, label):
         f.write(raw)
 
 
+CLOUD_RX = re.compile(r"onedrive|dropbox|google ?drive|icloud", re.I)
+
+
+def scrub_once():
+    """One-time clean-up (Home Base 1.5): take players' birth dates and ages out of the saved copies in imports,
+    inbox and backups, and compact the database so no trace of them is left. Everything else stays."""
+    conn = connect()
+    done = conn.execute("SELECT v FROM _meta WHERE k='scrub_birth_age'").fetchone()
+    conn.close()
+    if done:
+        return None
+    files = dbs = 0
+    for path in glob.glob(os.path.join(IMPORTS, "*.json")) + glob.glob(os.path.join(INBOX, "*.json")):
+        try:
+            with open(path, "rb") as f:
+                data = json.loads(f.read().decode("utf-8-sig"))
+            changed = False
+            for t, cols in DROPPED.items():
+                for r in (data.get("tables") or {}).get(t) or [] if isinstance(data, dict) else []:
+                    for c in cols:
+                        if isinstance(r, dict) and c in r:
+                            del r[c]; changed = True
+            if changed:
+                tmp = path + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=1)
+                os.replace(tmp, path)
+                files += 1
+        except (ValueError, OSError, AttributeError):
+            pass
+    for path in glob.glob(os.path.join(BACKUPS, "*.db")) + [DB_PATH]:
+        try:
+            c = sqlite3.connect(path)
+            hit = False
+            for t, cols in DROPPED.items():
+                have = [r[1] for r in c.execute('PRAGMA table_info("%s")' % t)]
+                for col in [x for x in cols if x in have]:
+                    hit = True
+                    try:
+                        for (v,) in c.execute("SELECT name FROM sqlite_master WHERE type='view'").fetchall():
+                            c.execute('DROP VIEW IF EXISTS "%s"' % v)   # backups only; views are rebuilt on the live database
+                        c.execute('ALTER TABLE "%s" DROP COLUMN "%s"' % (t, col))
+                    except sqlite3.Error:
+                        c.execute('UPDATE "%s" SET "%s" = NULL' % (t, col))
+            c.commit()
+            c.execute("VACUUM")        # rewrite the file so removed values aren't left behind in free space
+            c.close()
+            if hit and path != DB_PATH:
+                dbs += 1
+        except sqlite3.Error:
+            pass
+    conn = connect()
+    with conn:
+        conn.execute("INSERT OR REPLACE INTO _meta VALUES ('scrub_birth_age', ?)", (json.dumps({"at": now_iso(), "files": files, "backups": dbs, "seen": False}),))
+    conn.close()
+    setup_db()   # rebuild the report views (the live database was compacted above)
+    return files, dbs
+
+
+def scrub_note():
+    conn = connect()
+    r = conn.execute("SELECT v FROM _meta WHERE k='scrub_birth_age'").fetchone()
+    conn.close()
+    try:
+        v = json.loads(r[0]) if r else None
+    except ValueError:
+        v = None
+    if not v or v.get("seen"):
+        return ""
+    return ("<section class='card' id='scrub'><h2>One-time clean-up done</h2><p>Birth dates and ages are no longer kept. They were removed from "
+            "the database, from %d saved file%s in <code>imports</code> and from %d backup%s in <code>backups</code>. Everything else is as it was.</p>"
+            "<button class='btn alt' id='scrub-ok'>OK</button></section>"
+            "<script>document.getElementById('scrub-ok').onclick=async()=>{await fetch('/api/scrub-ok',{method:'POST'});document.getElementById('scrub').remove();};</script>") % (
+        v["files"], "" if v["files"] == 1 else "s", v["backups"], "" if v["backups"] == 1 else "s")
+
+
+def scrub_seen():
+    conn = connect()
+    with conn:
+        r = conn.execute("SELECT v FROM _meta WHERE k='scrub_birth_age'").fetchone()
+        if r:
+            v = json.loads(r[0]); v["seen"] = True
+            conn.execute("UPDATE _meta SET v = ? WHERE k='scrub_birth_age'", (json.dumps(v),))
+    conn.close()
+
+
+def cloud_note():
+    if not CLOUD_RX.search(HERE):
+        return ""
+    return ("<section class='card' style='border:2px solid #b91c1c'><h2>Home Base is in a cloud-synced folder</h2><p>This folder (<code>%s</code>) looks like "
+            "OneDrive, Dropbox, Google Drive or iCloud. The database holds players' names, so the cloud service gets a copy. Move the whole folder to the PC "
+            "itself, for example <code>C:\\vb-home-base</code>: close this window, move the folder, then start Home Base from its new place.</p></section>") % html.escape(HERE)
+
+
 def import_inbox():
     results = []
     for path in sorted(glob.glob(os.path.join(INBOX, "*.json"))):
@@ -371,40 +465,40 @@ def build_export(kind="setup"):
 
 
 # ---------------- web pages ----------------
-CSS = """body{font-family:Segoe UI,system-ui,sans-serif;margin:0;background:#eef1f4;color:#17202b}
-header{background:#13263d;color:#e8eef6;padding:14px 24px}header h1{margin:0;font-size:24px}header a{color:#e8eef6;margin-right:16px}
-main{max-width:1000px;margin:0 auto;padding:20px;display:grid;gap:16px}.card{background:#fff;border:1px solid #d9dfe6;border-radius:12px;padding:16px 20px}
-h2{margin:0 0 10px;font-size:20px}table{border-collapse:collapse;width:100%}th,td{padding:6px 10px;border-top:1px solid #d9dfe6;text-align:left}
-th{font-size:13px;color:#5d6877;text-transform:uppercase}.btn{display:inline-block;font:inherit;font-weight:600;padding:9px 14px;border-radius:8px;border:1px solid #1a6fb5;
-background:#1a6fb5;color:#fff;text-decoration:none;cursor:pointer;margin:4px 6px 4px 0}.btn.alt{background:#fff;color:#1a6fb5}
-.muted{color:#5d6877}.ok{color:#16803c;font-weight:600}.bad{color:#b91c1c;font-weight:600}code{background:#eef1f4;padding:1px 5px;border-radius:4px}
+CSS = """body{font-family:Segoe UI,system-ui,sans-serif;margin:0;background:#eef0f1;color:#18191c}
+header{background:#17181b;color:#f1f1f2;padding:14px 24px}header h1{margin:0;font-size:24px}header a{color:#f1f1f2;margin-right:16px}
+main{max-width:1000px;margin:0 auto;padding:20px;display:grid;gap:16px}.card{background:#fff;border:1px solid #d9dbde;border-radius:12px;padding:16px 20px}
+h2{margin:0 0 10px;font-size:20px}table{border-collapse:collapse;width:100%}th,td{padding:6px 10px;border-top:1px solid #d9dbde;text-align:left}
+th{font-size:13px;color:#5f636a;text-transform:uppercase}.btn{display:inline-block;font:inherit;font-weight:600;padding:9px 14px;border-radius:8px;border:1px solid #c8102e;
+background:#c8102e;color:#fff;text-decoration:none;cursor:pointer;margin:4px 6px 4px 0}.btn.alt{background:#fff;color:#c8102e}
+.muted{color:#5f636a}.ok{color:#16803c;font-weight:600}.bad{color:#b91c1c;font-weight:600}code{background:#eef0f1;padding:1px 5px;border-radius:4px}
 header{padding:14px 24px 0}.hv{font-size:13px;font-weight:500;opacity:.65}.hd{display:flex;align-items:center;gap:12px}.logo{height:44px;background:#fff;border-radius:6px;padding:2px}
 nav{display:flex;flex-wrap:wrap;gap:2px;margin-top:10px}nav a{margin:0;padding:8px 12px;border-radius:8px 8px 0 0;text-decoration:none;font-weight:600;font-size:14px;opacity:.8}
-nav a:hover{opacity:1;background:rgba(255,255,255,.08)}nav a.on{background:#eef1f4;color:#13263d;opacity:1}
-main{max-width:1200px}main>*{min-width:0}.scroll{overflow-x:auto}td,th{white-space:nowrap}tfoot td{font-weight:700;border-top:2px solid #17202b}
+nav a:hover{opacity:1;background:rgba(255,255,255,.08)}nav a.on{background:#eef0f1;color:#17181b;opacity:1}
+main{max-width:1200px}main>*{min-width:0}.scroll{overflow-x:auto}td,th{white-space:nowrap}tfoot td{font-weight:700;border-top:2px solid #18191c}
 tbody tr:nth-child(even){background:#f7f9fb}
 table.work td,table.work th{text-align:center}table.work td:nth-child(2),table.work th:nth-child(2){text-align:left}
-.wk{font-weight:700}.wk.off,.wk.abs{color:#5d6877;font-weight:500}.wk.abs{color:#b91c1c}
-.filters form{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}.filters label{display:grid;gap:3px;font-size:13px;font-weight:600;color:#5d6877}
+.wk{font-weight:700}.wk.off,.wk.abs{color:#5f636a;font-weight:500}.wk.abs{color:#b91c1c}
+.filters form{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}.filters label{display:grid;gap:3px;font-size:13px;font-weight:600;color:#5f636a}
 .filters select,.filters input{font:inherit;padding:7px 8px;border:1px solid #c9d1da;border-radius:8px;min-width:130px;background:#fff}
 .filters .tools{margin-top:8px;border-top:1px solid #e3e8ee;padding-top:8px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:10px}
-.kpi{background:#f3f6f9;border-radius:10px;padding:10px 12px}.kpi b{display:block;font-size:26px}.kpi span{font-size:13px;color:#5d6877}
-.pc-head{display:flex;gap:14px;align-items:center}.pc-num{font-size:40px;font-weight:800;background:#13263d;color:#fff;border-radius:12px;min-width:64px;text-align:center;padding:4px 10px}
+.kpi{background:#f3f6f9;border-radius:10px;padding:10px 12px}.kpi b{display:block;font-size:26px}.kpi span{font-size:13px;color:#5f636a}
+.pc-head{display:flex;gap:14px;align-items:center}.pc-num{font-size:40px;font-weight:800;background:#17181b;color:#fff;border-radius:12px;min-width:64px;text-align:center;padding:4px 10px}
 .pc-head h2{margin:0}.pc-head p{margin:2px 0 0}
 .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px}.chart h3{margin:0 0 4px;font-size:15px}
-.chart svg{width:100%;height:auto;display:block}.chart .grid{stroke:#d9dfe6}.chart .ax{font-size:11px;fill:#5d6877}
-.chart .ln{fill:none;stroke:#1a6fb5;stroke-width:2.5}.chart .pt{fill:#1a6fb5;stroke:#fff;stroke-width:1.5}.chart .val{font-size:11px;font-weight:700;fill:#17202b}
+.chart svg{width:100%;height:auto;display:block}.chart .grid{stroke:#d9dbde}.chart .ax{font-size:11px;fill:#5f636a}
+.chart .ln{fill:none;stroke:#c8102e;stroke-width:2.5}.chart .pt{fill:#c8102e;stroke:#fff;stroke-width:1.5}.chart .val{font-size:11px;font-weight:700;fill:#18191c}
 .hbars{display:grid;gap:8px}.hb{display:grid;grid-template-columns:90px 1fr 50px;gap:10px;align-items:center}
-.hb-track{height:16px;background:#eef1f4;border-radius:8px;overflow:hidden}.hb-fill{height:100%;border-radius:8px}
+.hb-track{height:16px;background:#eef0f1;border-radius:8px;overflow:hidden}.hb-fill{height:100%;border-radius:8px}
 .hb-fill.red{background:#b91c1c}.hb-fill.amber{background:#c2620a}.hb-fill.green{background:#16803c}.hb b{text-align:right}
 
-.foot{text-align:center;font-size:13px;color:#5d6877;padding:8px 0}.terms-card{border:2px solid #1a6fb5}.terms-card form{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.foot{text-align:center;font-size:13px;color:#5f636a;padding:8px 0}.terms-card{border:2px solid #c8102e}.terms-card form{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .terms h3{margin:14px 0 2px;font-size:16px}.terms p{margin:4px 0}
 .gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}.gauge-box{margin:0;text-align:center}.gauge-box figcaption{font-weight:700}.gauge{width:100%;max-width:280px;height:auto}
 .coach{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:start}.qr{text-align:center}.qr svg{width:240px;height:auto;display:block}
 .coach ol{display:grid;gap:8px;padding-left:22px}@media (max-width:700px){.coach{grid-template-columns:1fr}}
-@media print{body{background:#fff}header nav,.noprint,.filters{display:none}header{background:#fff;color:#17202b;padding:0 0 8px}
+@media print{body{background:#fff}header nav,.noprint,.filters{display:none}header{background:#fff;color:#18191c;padding:0 0 8px}
 main{max-width:none;padding:0}.card{border:0;padding:6px 0;break-inside:avoid}.charts{grid-template-columns:1fr 1fr}td,th{padding:3px 6px;font-size:12px}}"""
 
 
@@ -593,7 +687,7 @@ def dashboard():
     counts = [{"table": t, "rows": conn.execute('SELECT COUNT(*) FROM "%s" WHERE deleted = 0' % t).fetchone()[0]} for t in sync_tables(conn)]
     log = [dict(r) for r in conn.execute("SELECT at, device, file, added, updated, skipped FROM _import_log ORDER BY at DESC LIMIT 15")]
     conn.close()
-    body = """<section class='card' id='upd'><h2>Home Base updates</h2><p id='upd-msg' class='muted'>Checking for a newer version&hellip;</p>
+    body = cloud_note() + scrub_note() + """<section class='card' id='upd'><h2>Home Base updates</h2><p id='upd-msg' class='muted'>Checking for a newer version&hellip;</p>
       <button class='btn alt' id='upd-again'>Check again</button></section>
     <section class='card'><h2>Import a sync file</h2>
       <p>Choose a sync file a coach exported from the Team app. Newer changes win; importing the same file twice changes nothing.</p>
@@ -651,7 +745,7 @@ def dashboard():
     };
     const LOGO = %s;
     const lnow = document.getElementById('logo-now'), lout = document.getElementById('logo-out');
-    if (LOGO) lnow.innerHTML = `<img src="${LOGO}" alt="" style="height:96px;background:#fff;border:1px solid #d9dfe6;border-radius:8px;padding:4px">`;
+    if (LOGO) lnow.innerHTML = `<img src="${LOGO}" alt="" style="height:96px;background:#fff;border:1px solid #d9dbde;border-radius:8px;padding:4px">`;
     else lnow.innerHTML = "<p class='muted'>No logo yet.</p>";
     function loadImg(file) { return new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = r.result; }; r.onerror = bad; r.readAsDataURL(file); }); }
     function draw(img, w, h, bg, pad) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
@@ -1017,13 +1111,13 @@ def gauge_svg(title, value, lo, hi, cuts, fmt, sub):
     s.append(arc(lo, cuts[0], "#c3262e") + arc(cuts[0], cuts[1], "#e0a800") + arc(cuts[1], hi, "#1d7a3e"))
     for t in [lo, cuts[0], cuts[1], hi]:
         a = ang(t)
-        s.append("<line x1='%.1f' y1='%.1f' x2='%.1f' y2='%.1f' stroke='#5d6877' stroke-width='2'/>" % (cx + (R + 2) * math.cos(a), cy - (R + 2) * math.sin(a), cx + (R + 7) * math.cos(a), cy - (R + 7) * math.sin(a)))
-        s.append("<text x='%.1f' y='%.1f' font-size='11' fill='#5d6877' text-anchor='middle'>%s</text>" % (cx + (R + 16) * math.cos(a), cy - (R + 16) * math.sin(a) + 4, esc(fmt(t))))
+        s.append("<line x1='%.1f' y1='%.1f' x2='%.1f' y2='%.1f' stroke='#5f636a' stroke-width='2'/>" % (cx + (R + 2) * math.cos(a), cy - (R + 2) * math.sin(a), cx + (R + 7) * math.cos(a), cy - (R + 7) * math.sin(a)))
+        s.append("<text x='%.1f' y='%.1f' font-size='11' fill='#5f636a' text-anchor='middle'>%s</text>" % (cx + (R + 16) * math.cos(a), cy - (R + 16) * math.sin(a) + 4, esc(fmt(t))))
     if value is not None:
         a = ang(value)
-        s.append("<line x1='%d' y1='%d' x2='%.1f' y2='%.1f' stroke='#17202b' stroke-width='4' stroke-linecap='round'/>" % (cx, cy, cx + (R - 6) * math.cos(a), cy - (R - 6) * math.sin(a)))
-        s.append("<polygon points='%s %s %s' fill='#17202b'/>" % (P(R - 2, a), P(R - 18, a + 0.07), P(R - 18, a - 0.07)))
-    s.append("<circle cx='%d' cy='%d' r='7' fill='#17202b'/><text x='%d' y='%d' font-size='26' font-weight='700' fill='#17202b' text-anchor='middle'>%s</text></svg>" % (
+        s.append("<line x1='%d' y1='%d' x2='%.1f' y2='%.1f' stroke='#18191c' stroke-width='4' stroke-linecap='round'/>" % (cx, cy, cx + (R - 6) * math.cos(a), cy - (R - 6) * math.sin(a)))
+        s.append("<polygon points='%s %s %s' fill='#18191c'/>" % (P(R - 2, a), P(R - 18, a + 0.07), P(R - 18, a - 0.07)))
+    s.append("<circle cx='%d' cy='%d' r='7' fill='#18191c'/><text x='%d' y='%d' font-size='26' font-weight='700' fill='#18191c' text-anchor='middle'>%s</text></svg>" % (
         cx, cy, cx, cy + 26, "–" if value is None else esc(fmt(value))))
     return "<figure class='gauge-box'><figcaption>%s</figcaption>%s<div class='muted'>%s</div></figure>" % (esc(title), "".join(s), esc(sub))
 
@@ -1795,6 +1889,9 @@ class Handler(BaseHTTPRequestHandler):
             except (csv.Error, sqlite3.Error) as e:
                 res = {"ok": False, "error": "Couldn't read that file: %s" % e}
             return self.send(json.dumps(res), "application/json")
+        if u.path == "/api/scrub-ok":
+            scrub_seen()
+            return self.send(json.dumps({"ok": True}), "application/json")
         if u.path == "/api/inbox":
             return self.send(json.dumps(import_inbox()), "application/json")
         if u.path == "/api/import":
@@ -1817,6 +1914,9 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     setup_db()
+    r = scrub_once()
+    if r:
+        print("  One-time clean-up: birth dates and ages removed (%d saved files, %d backups)." % r)
     daily_backup()
     print("Volleyball Home Base v%s" % VERSION)
     print("Database: %s" % DB_PATH)

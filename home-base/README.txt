@@ -16,8 +16,9 @@ Setup steps and downloads: https://pbbergs.github.io/Volleyball-Tools/home-base/
 ONE-TIME SETUP (BY HAND)
 1. Install Python 3 from https://www.python.org/downloads/ (version 3.7 or newer).
    On the first installer screen, tick "Add python.exe to PATH".
-2. Put this whole vb-home-base folder somewhere permanent, for example Documents\vb-home-base.
-   If you use OneDrive, a folder inside OneDrive is fine.
+2. Put this whole vb-home-base folder somewhere permanent on the PC itself, for example C:\vb-home-base.
+   Keep it OUT of OneDrive, Dropbox, Google Drive or iCloud, and out of Documents or Desktop if OneDrive
+   backs those up: the database holds players' names, and a synced folder copies it to that company's cloud.
 
 WINDOWS ASKS "DO YOU WANT TO RUN THIS FILE?"
 Windows asks this the first time you open a .bat file that came from the internet. It is safe
