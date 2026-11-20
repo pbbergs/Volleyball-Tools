@@ -19,13 +19,8 @@ export const staffFor = teamId => db.where("staff", s => s.team_id === teamId);
 
 // ---------- players ----------
 export const fullName = p => `${p?.first || ""} ${p?.last || ""}`.trim() || "(no name)";
-export function playerAge(p) {
-  if (p?.birth_date) {
-    const b = new Date(p.birth_date + "T12:00:00"), n = new Date();
-    if (!isNaN(b)) { let a = n.getFullYear() - b.getFullYear(); if (n < new Date(n.getFullYear(), b.getMonth(), b.getDate())) a--; return a; }
-  }
-  return p?.age ?? "";
-}
+// A team's name with its age group, e.g. "13-2 · 13s".
+export const teamLabel = t => (t ? t.name + (t.age_group ? " · " + t.age_group : "") : "");
 export const clubPlayers = () => db.all("players").sort((a, b) => numSort(a.first, b.first) || numSort(a.last, b.last));
 
 // Roster entries for a team, joined with the player row, sorted by jersey number.
@@ -42,7 +37,7 @@ export function addToRoster(teamId, player) {
   return db.insert("roster", { team_id: teamId, player_id: player.id, number: player.number ?? "", position: player.position ?? "" });
 }
 
-// Short labels: "#7 Ava", adding a last initial when two players share a first name.
+// Short labels: "#7 First", adding a last initial when two players share a first name.
 export function shortNames(entries) {
   const count = {};
   for (const { p } of entries) { const k = (p.first || "").toLowerCase(); count[k] = (count[k] || 0) + 1; }

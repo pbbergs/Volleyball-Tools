@@ -111,7 +111,7 @@ export function render(main, ctx) {
   main.innerHTML = `<section class="card">
       <div class="card-head"><h2>Schedule</h2><span class="grow"></span>
         <button class="btn small primary" type="button" id="add">+ Add match</button></div>
-      <p class="muted small" style="margin:0">${esc(team.name)}${team.season ? " · " + esc(team.season) : ""} · ${list.length} match${list.length === 1 ? "" : "es"}</p>
+      <p class="muted small" style="margin:0">${esc(model.teamLabel(team))}${team.season ? " · " + esc(team.season) : ""} · ${list.length} match${list.length === 1 ? "" : "es"}</p>
       <div class="list">${list.length ? list.map(m => {
         const res = model.matchResult(m.id);
         const pill = m.id === cur && m.status !== "played" ? `<span class="pill live">Tracking</span>`

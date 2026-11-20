@@ -33,6 +33,11 @@ EVERY TIME
 2. Your browser opens http://localhost:8770 (if not, type that address yourself).
 3. To stop Home Base, close the black window.
 
+IMPORT PLAYERS FROM A SPREADSHEET
+- Dashboard > Import players > Download blank template (First Name, Last Name, Number, Position, Team).
+- Fill it in, save as CSV, choose it and click Preview. Check the preview, then Import these players.
+- Players already here (same first and last name) are updated, not added twice. Then send the setup file.
+
 IMPORT DATA FROM A PHONE
 - On the phone: Team app > More > Sync > Export sync file, and send it to yourself.
 - On the PC: Dashboard > choose the file > Import.

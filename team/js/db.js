@@ -2,7 +2,7 @@
 // settings (device name, current team, current match), which are never synced.
 // All rows are also kept in memory, so screens read instantly; every change is written through.
 
-import { TABLES, COMMON, SCHEMA_VERSION, DUTIES } from "./schema.js";
+import { TABLES, COMMON, SCHEMA_VERSION, DUTIES, DROPPED } from "./schema.js";
 
 const DB_NAME = "vbteam";
 const mem = {};            // table -> Map(id -> row)
@@ -45,6 +45,10 @@ export async function open(errorHandler) {
     onError("This device can't save data right now (private browsing?). Changes will be lost when the app closes.");
   }
   try { navigator.storage?.persist?.(); } catch {}
+  // fields no longer kept (players' birth date and age): erase them from this device
+  for (const [t, cols] of Object.entries(DROPPED))
+    for (const row of mem[t].values())
+      if (cols.some(c => c in row)) { for (const c of cols) delete row[c]; await putRaw(t, row); }
   // shared fixed rows
   for (const d of DUTIES) if (!mem.duties.has(d.id)) await putRaw("duties", { ...d });
   if (!getLocal("device_id")) setLocal("device_id", uuid());

@@ -4,7 +4,7 @@
 // Nothing is removed because a file doesn't mention it, and importing the same file twice changes nothing.
 
 import * as db from "./db.js";
-import { APP_VERSION, SCHEMA_VERSION, SYNC_FORMAT, SYNC_FORMAT_VERSION } from "./schema.js";
+import { APP_VERSION, SCHEMA_VERSION, SYNC_FORMAT, SYNC_FORMAT_VERSION, DROPPED } from "./schema.js";
 
 export function buildExport() {
   const tables = {};
@@ -41,8 +41,9 @@ export async function importData(data) {
   for (const [t, rows] of Object.entries(data.tables)) {
     if (!known.has(t)) { summary.unknown.push(t); continue; }
     const s = { added: 0, updated: 0, skipped: 0, invalid: 0 };
-    for (const r of Array.isArray(rows) ? rows : []) {
-      if (!validRow(r)) { s.invalid++; continue; }
+    for (const r0 of Array.isArray(rows) ? rows : []) {
+      if (!validRow(r0)) { s.invalid++; continue; }
+      const r = { ...r0 }; for (const c of DROPPED[t] || []) delete r[c];   // e.g. birth date and age from older versions
       const mine = db.getAny(t, r.id);
       if (!mine) { await db.putRaw(t, { ...r }); s.added++; }
       else if (r.updated_at > (mine.updated_at || "")) { await db.putRaw(t, { ...r }); s.updated++; }

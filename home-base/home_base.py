@@ -28,7 +28,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, quote
 
-VERSION = "1.3.1"
+VERSION = "1.4.0"
 PORT = 8770
 HERE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(HERE, "volleyball.db")
@@ -41,9 +41,9 @@ SYNC_FORMAT, SYNC_FORMAT_VERSION = "vbteam-sync", 1
 # sync file are added automatically, so the database can grow without changing this program.
 COMMON = ["id", "created_at", "updated_at", "device", "deleted"]
 TABLES = {
-    "teams":     ["name", "season", "notes", "levels"],
+    "teams":     ["name", "season", "notes", "levels", "age_group"],
     "staff":     ["team_id", "role", "first", "last", "phone", "email"],
-    "players":   ["first", "last", "number", "position", "age", "birth_date", "notes"],
+    "players":   ["first", "last", "number", "position", "notes"],
     "roster":    ["team_id", "player_id", "number", "position", "rot"],
     "matches":   ["team_id", "date", "time", "opponent", "location", "event", "status", "scoring", "cur_set", "notes"],
     "sets":      ["match_id", "set_no", "us", "them"],
@@ -58,6 +58,9 @@ TABLES = {
     "scout_matches": ["date", "team1_id", "team2_id", "location"],
     "scout_passes":  ["match_id", "scout_team_id", "scout_player_id", "rating", "tap"],
 }
+# Fields that are no longer kept (players' birth date and age): removed from the database at start-up
+# and ignored in any sync file, even one from a phone that hasn't updated yet.
+DROPPED = {"players": ["age", "birth_date"]}
 SETUP_TABLES = ["teams", "staff", "players", "roster", "matches", "sets", "duties", "work_log", "links", "settings",
                 "scout_teams", "scout_players", "scout_matches", "scout_passes"]
 DUTY_NAMES = ["Score keeper", "Libero tracker", "Scoreboard", "Line Judge 1A", "Line Judge 1B", "Line Judge 2A",
@@ -241,6 +244,12 @@ def setup_db():
             conn.execute("INSERT INTO _meta VALUES ('device_id', ?)", (str(uuid.uuid4()),))
         for v in VIEWS:
             conn.execute('DROP VIEW IF EXISTS "%s"' % v)
+        for t, cols in DROPPED.items():   # remove fields that are no longer kept
+            for c in [c for c in cols if c in columns(conn, t)]:
+                try:
+                    conn.execute('ALTER TABLE "%s" DROP COLUMN "%s"' % (t, c))
+                except sqlite3.Error:     # older SQLite: blank the values instead
+                    conn.execute('UPDATE "%s" SET "%s" = NULL' % (t, c))
         for v, sql in VIEWS.items():
             try:
                 conn.execute('CREATE VIEW "%s" AS %s' % (v, sql))
@@ -293,10 +302,11 @@ def _import_data(data, file_label):
             for table, rows in data["tables"].items():
                 if not isinstance(rows, list) or not NAME_OK.match(table):
                     continue
+                drop = set(DROPPED.get(table, []))
                 cols = set(TABLES.get(table, []))
                 for r in rows:
                     if isinstance(r, dict):
-                        cols.update(k for k in r if k not in COMMON)
+                        cols.update(k for k in r if k not in COMMON and k not in drop)
                 ensure_table(conn, table, sorted(cols))
                 s = {"added": 0, "updated": 0, "skipped": 0, "invalid": 0}
                 have = set(columns(conn, table))
@@ -304,7 +314,7 @@ def _import_data(data, file_label):
                     if not (isinstance(r, dict) and isinstance(r.get("id"), str) and r["id"] and isinstance(r.get("updated_at"), str)):
                         s["invalid"] += 1
                         continue
-                    keys = [k for k in r if k in have]
+                    keys = [k for k in r if k in have and k not in drop]
                     old = conn.execute('SELECT updated_at FROM "%s" WHERE id = ?' % table, (r["id"],)).fetchone()
                     if old is not None and not (r["updated_at"] > (old[0] or "")):
                         s["skipped"] += 1
@@ -490,6 +500,94 @@ def table_html(rows, cols=None):
         "".join("<tr>%s</tr>" % "".join("<td>%s</td>" % html.escape("" if r[c] is None else str(r[c])) for c in cols) for r in rows))
 
 
+# ---------------- import players from a CSV file (same columns as the Team app's Import CSV) ----------------
+POSITIONS = ["Setter", "Pin", "Middle", "Right Side", "Libero", "DS"]
+PLAYER_COLS = [("first", r"first"), ("last", r"last|surname"), ("number", r"^(#|no\.?|num|number|jersey)"), ("position", r"^pos"), ("team", r"team")]
+PLAYER_TEMPLATE = "First Name,Last Name,Number,Position,Team\r\n"
+
+
+def parse_players_csv(text):
+    rows = [[c.strip() for c in r] for r in csv.reader(io.StringIO(text.lstrip("﻿")))]
+    rows = [(i + 1, r) for i, r in enumerate(rows) if any(r)]
+    if rows and any(re.search(r"first|last|name|number|jersey|position|team", c, re.I) for c in rows[0][1]):
+        head = rows.pop(0)[1]
+        idx = {k: next((i for i, c in enumerate(head) if re.search(rx, c, re.I)), -1) for k, rx in PLAYER_COLS}
+        if idx["first"] < 0:
+            idx["first"] = next((i for i, c in enumerate(head) if re.search(r"name", c, re.I)), -1)
+    else:   # no header: first, last, number, position, team (older files had an age column before team)
+        old = any(len(r) > 5 for _, r in rows) and all(len(r) < 5 or not r[4] or re.match(r"^\d{1,2}$", r[4]) for _, r in rows)
+        idx = {"first": 0, "last": 1, "number": 2, "position": 3, "team": 5 if old else 4}
+    out = []
+    for line, r in rows:
+        g = lambda k: r[idx[k]].strip() if 0 <= idx[k] < len(r) else ""
+        first, last = g("first"), g("last")
+        if first and not last and idx["last"] < 0 and " " in first:
+            first, last = first.split(" ", 1)
+        pos_in = g("position")
+        pos = next((p for p in POSITIONS if p.lower() == pos_in.lower()), "")
+        out.append({"line": line, "first": first, "last": last.strip(), "number": g("number").lstrip("#"),
+                    "position": pos, "position_in": pos_in, "team": g("team")})
+    return out
+
+
+def import_players(text, apply=False):
+    """Preview (apply=False) or import a player CSV. Players match by first + last name (any capitals)."""
+    rows = parse_players_csv(text)
+    conn = connect()
+    key = lambda f, l: ("%s|%s" % (f, l or "")).lower()
+    players = {key(r["first"], r["last"]): dict(r) for r in conn.execute("SELECT * FROM players WHERE deleted = 0")}
+    teams = {(r["name"] or "").lower(): dict(r) for r in conn.execute("SELECT id, name FROM teams WHERE deleted = 0")}
+    roster = {(r["team_id"], r["player_id"]): dict(r) for r in conn.execute("SELECT * FROM roster WHERE deleted = 0")}
+    res = {"ok": True, "rows": [], "new_players": 0, "updated_players": 0, "unchanged": 0, "new_teams": [], "rostered": 0, "skipped": 0}
+    seen, t = set(), now_iso()
+    try:
+        with conn:
+            for r in rows:
+                notes = []
+                if not r["first"]:
+                    res["skipped"] += 1; res["rows"].append(dict(r, what="Skipped: no first name")); continue
+                k = key(r["first"], r["last"])
+                if k in seen:
+                    res["skipped"] += 1; res["rows"].append(dict(r, what="Skipped: already earlier in this file")); continue
+                seen.add(k)
+                if r["position_in"] and not r["position"]:
+                    notes.append("position '%s' not recognised" % r["position_in"])
+                p = players.get(k)
+                if p is None:
+                    p = {"id": str(uuid.uuid4()), "first": r["first"], "last": r["last"], "number": r["number"], "position": r["position"]}
+                    players[k] = p; res["new_players"] += 1; what = "New player"
+                    if apply:
+                        conn.execute("INSERT INTO players (id, created_at, updated_at, device, deleted, first, last, number, position) VALUES (?,?,?,?,0,?,?,?,?)",
+                                     (p["id"], t, t, "Home Base", p["first"], p["last"], p["number"], p["position"]))
+                else:
+                    ch = {c: r[c] for c in ("number", "position") if r[c] and r[c] != (p.get(c) or "")}
+                    if ch:
+                        res["updated_players"] += 1; what = "Update: " + ", ".join("%s %s" % (c, v) for c, v in ch.items())
+                        if apply:
+                            conn.execute("UPDATE players SET %s, updated_at = ?, device = 'Home Base' WHERE id = ?" % ", ".join("%s = ?" % c for c in ch),
+                                         list(ch.values()) + [t, p["id"]])
+                        p.update(ch)
+                    else:
+                        res["unchanged"] += 1; what = "Already here"
+                if r["team"]:
+                    tm = teams.get(r["team"].lower())
+                    if tm is None:
+                        tm = {"id": str(uuid.uuid4()), "name": r["team"]}
+                        teams[r["team"].lower()] = tm; res["new_teams"].append(r["team"])
+                        if apply:
+                            conn.execute("INSERT INTO teams (id, created_at, updated_at, device, deleted, name, season) VALUES (?,?,?,?,0,?,?)",
+                                         (tm["id"], t, t, "Home Base", tm["name"], ""))
+                    if (tm["id"], p["id"]) not in roster:
+                        roster[(tm["id"], p["id"])] = {}; res["rostered"] += 1; what += "; added to " + tm["name"]
+                        if apply:
+                            conn.execute("INSERT INTO roster (id, created_at, updated_at, device, deleted, team_id, player_id, number, position) VALUES (?,?,?,?,0,?,?,?,?)",
+                                         (str(uuid.uuid4()), t, t, "Home Base", tm["id"], p["id"], p.get("number") or "", p.get("position") or ""))
+                res["rows"].append(dict(r, what=what + ("; " + "; ".join(notes) if notes else "")))
+    finally:
+        conn.close()
+    return res
+
+
 def dashboard():
     conn = connect()
     counts = [{"table": t, "rows": conn.execute('SELECT COUNT(*) FROM "%s" WHERE deleted = 0' % t).fetchone()[0]} for t in sync_tables(conn)]
@@ -503,6 +601,12 @@ def dashboard():
       <button class='btn alt' id='inbox'>Import inbox folder</button>
       <div id='out'></div>
       <p class='muted'>Inbox folder: <code>%s</code></p></section>
+    <section class='card'><h2>Import players</h2>
+      <p>Load a roster from a spreadsheet saved as CSV, with the columns <b>First Name, Last Name, Number, Position, Team</b>. A Team column puts each player on that team, and creates the team if it's new. Players already here (same first and last name) are updated, never added twice. You see a preview before anything is saved.</p>
+      <p><a class='btn alt' href='/api/players-template'>Download blank template</a></p>
+      <input type='file' id='pf' accept='.csv,text/csv'> <button class='btn' id='pgo'>Preview</button>
+      <div id='pout'></div>
+      <p class='muted'>Positions: Setter, Pin, Middle, Right Side, Libero, DS. Age and birth date aren't kept, so leave them out. Then send the setup file to the phones.</p></section>
     <section class='card'><h2>Send to the phones</h2>
       <p>The setup file has teams, coaches, players, rosters, the schedule, set scores and links. Import it on each coach's phone (Team app &rarr; More &rarr; Sync &rarr; Import file).</p>
       <a class='btn' href='/api/export?kind=setup'>Download setup file</a>
@@ -517,6 +621,21 @@ def dashboard():
     <section class='card'><h2>Recent imports</h2>%s</section>
     <section class='card'><h2>What's in the database</h2>%s<p class='muted'>Database file: <code>%s</code></p></section>
     <script>
+    const pout = document.getElementById('pout');
+    const pe = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+    async function players(apply) {
+      const f = document.getElementById('pf').files[0];
+      if (!f) { pout.innerHTML = "<p class='bad'>Choose a CSV file first.</p>"; return; }
+      const r = await (await fetch('/api/players' + (apply ? '?apply=1' : ''), {method:'POST', headers:{'Content-Type':'text/csv'}, body: await f.text()})).json();
+      if (!r.ok) { pout.innerHTML = `<p class='bad'>${pe(r.error)}</p>`; return; }
+      const sum = `${r.new_players} new, ${r.updated_players} updated, ${r.unchanged} already here` + (r.new_teams.length ? `, new team${r.new_teams.length > 1 ? 's' : ''}: ${pe(r.new_teams.join(', '))}` : '') + (r.skipped ? `, ${r.skipped} skipped` : '');
+      if (apply) { pout.innerHTML = `<p class='ok'>Imported: ${sum}. Download the setup file to send them to the phones.</p>`; setTimeout(() => location.reload(), 3000); return; }
+      pout.innerHTML = `<p><b>Preview:</b> ${sum}.</p><div class='scroll'><table><tr><th>Line</th><th>Name</th><th>#</th><th>Position</th><th>Team</th><th>What happens</th></tr>` +
+        r.rows.map(x => `<tr><td>${x.line}</td><td>${pe(x.first + ' ' + x.last)}</td><td>${pe(x.number)}</td><td>${pe(x.position || x.position_in)}</td><td>${pe(x.team)}</td><td>${pe(x.what)}</td></tr>`).join('') +
+        `</table></div>` + (r.new_players + r.updated_players + r.rostered + r.new_teams.length ? `<p><button class='btn' id='papply'>Import these players</button></p>` : `<p class='muted'>Nothing to change.</p>`);
+      const b = document.getElementById('papply'); if (b) b.onclick = () => players(true);
+    }
+    document.getElementById('pgo').onclick = () => players(false);
     const out = document.getElementById('out');
     function show(name, r){ out.insertAdjacentHTML('beforeend', r.ok
       ? `<p class='ok'>${name}: from ${r.from} — ` + Object.entries(r.tables).map(([t,s])=>`${t} +${s.added} / ${s.updated} updated`).filter(x=>!/\\+0 \\/ 0/.test(x)).join(', ') + `</p>`
@@ -706,7 +825,8 @@ class Filt:
         self.team, self.event = g("team"), g("event")
         self.frm = g("from") if DATE_OK.match(g("from")) else ""
         self.to = g("to") if DATE_OK.match(g("to")) else ""
-        self.teams = [dict(r) for r in conn.execute("SELECT id, name FROM teams WHERE deleted = 0 ORDER BY name")]
+        self.teams = [dict(r) for r in conn.execute(
+            "SELECT id, name || CASE WHEN COALESCE(age_group, '') <> '' THEN ' · ' || age_group ELSE '' END AS name FROM teams WHERE deleted = 0 ORDER BY name")]
         if self.team not in {t["id"] for t in self.teams}:
             self.team = ""
         if need_team and not self.team and self.teams:
@@ -1620,6 +1740,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(coach_page())
             if u.path == "/api/update-check":
                 return self.send(json.dumps(check_update()), "application/json")
+            if u.path == "/api/players-template":
+                return self.send("\ufeff" + PLAYER_TEMPLATE, "text/csv; charset=utf-8", extra={"Content-Disposition": 'attachment; filename="players-template.csv"'})
             if u.path == "/api/version":
                 return self.send(json.dumps({"version": VERSION}), "application/json")
             if u.path == "/report/sideouts":
@@ -1659,6 +1781,20 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(json.dumps(install_update()), "application/json")
             except Exception as e:
                 return self.send(json.dumps({"ok": False, "error": "Update failed, nothing was changed (%s)." % e}), "application/json")
+        if u.path == "/api/players":
+            n = int(self.headers.get("Content-Length") or 0)
+            if n > 5 * 1024 * 1024:
+                return self.send(json.dumps({"ok": False, "error": "File too large."}), "application/json", 413)
+            raw = self.rfile.read(n)
+            try:
+                text = raw.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                text = raw.decode("cp1252", "replace")   # Excel's older "CSV" on Windows
+            try:
+                res = import_players(text, apply=parse_qs(u.query).get("apply", ["0"])[0] == "1")
+            except (csv.Error, sqlite3.Error) as e:
+                res = {"ok": False, "error": "Couldn't read that file: %s" % e}
+            return self.send(json.dumps(res), "application/json")
         if u.path == "/api/inbox":
             return self.send(json.dumps(import_inbox()), "application/json")
         if u.path == "/api/import":

@@ -2,10 +2,13 @@
 // To add a field later: add it to the list here and in home_base.py. Old rows simply don't have it yet.
 // Every table also has the COMMON columns, which make syncing between devices safe.
 
-export const APP_VERSION = "v1.7";
+export const APP_VERSION = "v1.8";
 
 // "What's new" notes, newest first. Shown once after an update, and any time by tapping the version number.
 export const RELEASE_NOTES = [
+  ["v1.8", ["Teams have an age group (10s to 18s) on More → Team. Players play in the age group of the team they're on.",
+            "Players no longer have an age or birth date: the fields are gone and any stored ones were erased from this phone.",
+            "Home Base can now import players from a CSV file too, with a template and a preview."]],
   ["v1.7", ["The app now asks for the team password each time it opens (and after 5 minutes away). Ask your head coach for it.",
             "The Volleyball Tools pages ask search engines not to list them."]],
   ["v1.6.3", ["Guide: a new section, Using the app for another team or club.",
@@ -40,6 +43,10 @@ export const RELEASE_NOTES = [
   ["v1.0.1", ["Android: install the app from Chrome (⋮ → Install app)."]],
   ["v1.0", ["New version numbers: v1.2.3 = big release . new feature . small fix."]],
 ];
+// Fields that are no longer kept: erased from this device on start-up and ignored in any file imported.
+export const DROPPED = { players: ["age", "birth_date"] };
+// Age groups a team can be set to.
+export const AGE_GROUPS = ["10s", "11s", "12s", "13s", "14s", "15s", "16s", "17s", "18s"];
 export const SCHEMA_VERSION = 2;          // bump when a new table is added
 export const SYNC_FORMAT = "vbteam-sync";
 export const SYNC_FORMAT_VERSION = 1;
@@ -47,9 +54,9 @@ export const SYNC_FORMAT_VERSION = 1;
 export const COMMON = ["id", "created_at", "updated_at", "device", "deleted"];
 
 export const TABLES = {
-  teams:     ["name", "season", "notes", "levels"],
+  teams:     ["name", "season", "notes", "levels", "age_group"],
   staff:     ["team_id", "role", "first", "last", "phone", "email"],
-  players:   ["first", "last", "number", "position", "age", "birth_date", "notes"],
+  players:   ["first", "last", "number", "position", "notes"],
   roster:    ["team_id", "player_id", "number", "position", "rot"],
   matches:   ["team_id", "date", "time", "opponent", "location", "event", "status", "scoring", "cur_set", "notes"],
   sets:      ["match_id", "set_no", "us", "them"],

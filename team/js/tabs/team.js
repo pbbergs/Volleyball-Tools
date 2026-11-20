@@ -2,9 +2,12 @@
 
 import * as db from "../db.js";
 import * as model from "../model.js";
-import { POSITIONS, STAFF_ROLES, ROT_COUNTS } from "../schema.js";
+import { POSITIONS, STAFF_ROLES, ROT_COUNTS, AGE_GROUPS } from "../schema.js";
 import { $, $$, esc, sheet, ask, say, toast } from "../ui.js";
 import { levelsField, wireLevels, readLevels } from "../levels.js";
+
+// The team's age group (13s, 17s and so on). Players play in the age group of the team they're on.
+const ageField = v => `<label class="field">Age group<select id="t-age"><option value="">Not set</option>${AGE_GROUPS.map(a => `<option${a === v ? " selected" : ""}>${a}</option>`).join("")}</select></label>`;
 
 const posOptions = cur => `<option value="">—</option>` +
   POSITIONS.map(p => `<option${p === cur ? " selected" : ""}>${esc(p)}</option>`).join("");
@@ -14,6 +17,7 @@ async function newTeam(ctx) {
   const r = await sheet({ title: "New team",
     body: `<label class="field">Team name<input type="text" id="t-name" maxlength="60" placeholder="e.g. 13U Gold"></label>
            <label class="field">Season (optional)<input type="text" id="t-season" maxlength="30" placeholder="e.g. 2026–27"></label>
+           ${ageField("")}
            ${levelsField(null)}
            <p class="muted small" style="margin:0">Colour levels set how strict the red, yellow and green are on the gauges and the Board. Pick what suits the team's skill level; you can change it later on More → Team.</p>`,
     onOpen: el => wireLevels(el),
@@ -21,7 +25,7 @@ async function newTeam(ctx) {
     check: el => (!$("#t-name", el).value.trim() ? "Type the team name." : readLevels(el).error || true) });
   if (!r.value) return;
   const lv = readLevels(r.el);
-  const t = db.insert("teams", { name: $("#t-name", r.el).value.trim(), season: $("#t-season", r.el).value.trim(), levels: JSON.stringify(lv) });
+  const t = db.insert("teams", { name: $("#t-name", r.el).value.trim(), season: $("#t-season", r.el).value.trim(), age_group: $("#t-age", r.el).value, levels: JSON.stringify(lv) });
   model.setCurrentTeam(t.id);
   toast(`Created ${t.name}.`);
   ctx.refresh();
@@ -40,17 +44,15 @@ function playerForm(p = {}, team = null) {
       <label class="field">First name<input type="text" id="p-first" value="${esc(p.first || "")}" maxlength="40" autocomplete="off"></label>
       <label class="field">Last name<input type="text" id="p-last" value="${esc(p.last || "")}" maxlength="40" autocomplete="off"></label>
     </div>
-    <div class="grid3">
+    <div class="grid2">
       <label class="field">Number<input type="text" inputmode="numeric" id="p-num" value="${esc(p.number ?? "")}" maxlength="4"></label>
       <label class="field">Position<select id="p-pos">${posOptions(p.position)}</select></label>
-      <label class="field">Age<input type="number" inputmode="numeric" min="5" max="25" id="p-age" value="${esc(p.age ?? "")}"></label>
     </div>
-    <label class="field">Birth date (optional; age updates itself)<input type="date" id="p-birth" value="${esc(p.birth_date || "")}"></label>
     ${team ? `<label class="chk"><input type="checkbox" id="p-add" checked> Add to ${esc(team.name)}</label>` : ""}`;
 }
 const readPlayer = el => ({
   first: $("#p-first", el).value.trim(), last: $("#p-last", el).value.trim(), number: $("#p-num", el).value.trim(),
-  position: $("#p-pos", el).value, age: $("#p-age", el).value ? +$("#p-age", el).value : null, birth_date: $("#p-birth", el).value || null,
+  position: $("#p-pos", el).value,
 });
 
 async function newPlayer(team, ctx) {
@@ -129,11 +131,13 @@ export function parseCSV(text) {
 }
 
 const COLS = { first: /first/i, last: /last|surname/i, number: /^(#|no\.?|num|number|jersey)/i, position: /^pos/i,
-               age: /^age/i, birth_date: /birth|dob/i, team: /team/i };
+               team: /team/i };   // any other columns (such as age or birth date) are ignored
 
 export function importPlayers(text, defaultTeam) {
   const rows = parseCSV(text);
-  let map = { first: 0, last: 1, number: 2, position: 3, age: 4, team: 5, birth_date: -1 };
+  // No header row: first, last, number, position, team. Older files had an age column before team: skip it.
+  const oldOrder = rows.some(r => r.length > 5) && rows.every(r => !r[4] || /^\d{1,2}$/.test(r[4]));
+  let map = { first: 0, last: 1, number: 2, position: 3, team: oldOrder ? 5 : 4 };
   if (rows.length && rows[0].some(c => /first|last|name|number|jersey|position|team|age/i.test(c))) {
     const h = rows.shift(); map = {};
     for (const [k, re] of Object.entries(COLS)) map[k] = h.findIndex(c => re.test(c));
@@ -152,8 +156,7 @@ export function importPlayers(text, defaultTeam) {
     let p = existing.get(key(first, last));
     if (p) out.already++;
     else {
-      p = db.insert("players", { first, last, number: g("number").replace(/^#/, ""), position: pos,
-        age: /^\d+$/.test(g("age")) ? +g("age") : null, birth_date: /^\d{4}-\d{2}-\d{2}$/.test(g("birth_date")) ? g("birth_date") : null });
+      p = db.insert("players", { first, last, number: g("number").replace(/^#/, ""), position: pos });
       existing.set(key(first, last), p); out.added++;
     }
     let team = defaultTeam;
@@ -194,11 +197,12 @@ export function render(main, ctx) {
   main.innerHTML = `
     <section class="card">
       <div class="card-head"><h2>Team</h2><span class="grow"></span><button class="btn small" type="button" id="new-team">+ New team</button></div>
-      ${teams.length > 1 ? `<label class="field">Working with<select id="team-pick">${teams.map(t => `<option value="${esc(t.id)}"${t.id === team.id ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></label>` : ""}
+      ${teams.length > 1 ? `<label class="field">Working with<select id="team-pick">${teams.map(t => `<option value="${esc(t.id)}"${t.id === team.id ? " selected" : ""}>${esc(model.teamLabel(t))}</option>`).join("")}</select></label>` : ""}
       <div class="grid2">
         <label class="field">Team name<input type="text" id="t-name" value="${esc(team.name)}" maxlength="60"></label>
         <label class="field">Season<input type="text" id="t-season" value="${esc(team.season || "")}" maxlength="30"></label>
       </div>
+      ${ageField(team.age_group)}
     </section>
 
     <section class="card" id="levels-card">
@@ -222,7 +226,7 @@ export function render(main, ctx) {
         <button class="btn small primary" type="button" id="pick">+ Add from club list</button></div>
       <div class="list">${roster.length ? roster.map(({ r, p }) => `<button type="button" class="item" data-r="${esc(r.id)}">
           <span class="num">${esc(r.number ?? "")}</span>
-          <span class="main-txt"><b>${esc(model.fullName(p))}</b><span class="sub">${esc(r.position || "No position")}${r.rot ? " · rotation count " + esc(r.rot) : ""}${model.playerAge(p) !== "" ? " · age " + esc(model.playerAge(p)) : ""}</span></span>
+          <span class="main-txt"><b>${esc(model.fullName(p))}</b><span class="sub">${esc(r.position || "No position")}${r.rot ? " · rotation count " + esc(r.rot) : ""}</span></span>
           <span class="chev">›</span></button>`).join("")
         : `<p class="muted">No players on ${esc(team.name)} yet. Add them from the club list below, or import a CSV file.</p>`}</div>
     </section>
@@ -236,7 +240,7 @@ export function render(main, ctx) {
       <div class="list">${club.map(p => { const ts = model.teamsOfPlayer(p.id).map(t => t.name).join(", "); return `
         <button type="button" class="item" data-p="${esc(p.id)}">
           <span class="main-txt"><b>${esc(model.fullName(p))}</b>
-          <span class="sub">${[p.number ? "#" + p.number : "", p.position, model.playerAge(p) !== "" ? "age " + model.playerAge(p) : "", ts || "no team"].filter(Boolean).map(esc).join(" · ")}</span></span>
+          <span class="sub">${[p.number ? "#" + p.number : "", p.position, ts || "no team"].filter(Boolean).map(esc).join(" · ")}</span></span>
           <span class="chev">›</span></button>`; }).join("") || `<p class="muted">No players yet.</p>`}</div>
     </section>`;
 
@@ -245,6 +249,7 @@ export function render(main, ctx) {
   if (pick) pick.onchange = () => { model.setCurrentTeam(pick.value); ctx.refresh(); };
   $("#t-name", main).onchange = e => { const v = e.target.value.trim(); if (v) { db.update("teams", team.id, { name: v }); ctx.refresh(); } else e.target.value = team.name; };
   $("#t-season", main).onchange = e => db.update("teams", team.id, { season: e.target.value.trim() });
+  $("#t-age", main).onchange = e => { db.update("teams", team.id, { age_group: e.target.value }); ctx.refresh(); };
   wireLevels($("#levels-card", main), v => { db.update("teams", team.id, { levels: JSON.stringify(v) }); toast("Colour levels saved."); });
   for (const row of $$("[data-role]", main)) {
     const save = () => saveStaff(team.id, row.dataset.role, $(".s-first", row).value.trim(), $(".s-last", row).value.trim());
