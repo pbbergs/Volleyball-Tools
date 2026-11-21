@@ -175,7 +175,9 @@ First3,Last3,3,Libero,12U Blue</pre>
   <li>In Home Base, click <b>Download setup file</b> and email it to each coach.</li>
   <li>On the phone: save the attachment to Files, then More → Sync → <b>Import file</b>.</li>
 </ol>
-<p>Coaches can also swap sync files directly with each other the same way.</p>`],
+<p>Coaches can also swap sync files directly with each other the same way.</p>
+<p><b>Locked files:</b> every sync and setup file is locked with the club's <b>file password</b>, which the head coach sets on Home Base (Dashboard, <b>File password</b>). Opened anywhere else, a file is unreadable. The first time you export or import, the app asks for the password; tick <b>Remember on this phone</b> so it doesn't ask again. Each file is locked with brand-new keys, and a file that isn't locked, or was changed after it was made, is refused. When the head coach changes the password, the next setup file passes the new one to your phone. To clear it from a phone: More → Sync → <b>Forget the password</b>.</p>
+<p>Tell coaches the file password yourself, in person or by phone, never in the same message as a file.</p>`],
 
 ["homebase", "Home Base on the PC", `
 <ol>

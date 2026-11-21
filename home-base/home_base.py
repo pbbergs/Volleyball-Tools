@@ -28,7 +28,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, quote
 
-VERSION = "1.5.0"
+VERSION = "1.6.0"
 PORT = 8770
 HERE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(HERE, "volleyball.db")
@@ -283,6 +283,166 @@ def cell(v):
 IMPORT_LOCK = threading.Lock()
 
 
+# ---------------- locked files ----------------
+# Every sync and setup file is locked with the club's file password. The format, shared with the Team app (js/filelock.js):
+#   a random 64-byte data key encrypts the content: HMAC-SHA256 in counter mode for the keystream, then an HMAC-SHA256 tag
+#   over nonce + ciphertext (encrypt-then-MAC). The data key is stored once per password ("slot"), wrapped with a key made
+#   from that password by PBKDF2-SHA256 with its own random salt. New random keys, salts and nonces for every file.
+#   Only Python's standard library is used. No password is built in: each club sets its own.
+import base64 as _b64
+import hashlib as _hl
+import hmac as _hm
+import unicodedata as _ud
+
+LOCK_FORMAT, LOCK_ITER = "vbteam-locked", 200000
+
+
+class LockError(Exception):
+    pass
+
+
+def _b64e(b):
+    return _b64.b64encode(b).decode("ascii")
+
+
+def _b64d(x):
+    return _b64.b64decode(str(x).encode("ascii"), validate=True)
+
+
+def _keystream(key, nonce, n):
+    base, out, i = _hm.new(key, digestmod=_hl.sha256), [], 0
+    while 32 * i < n:
+        h = base.copy(); h.update(nonce + i.to_bytes(4, "big")); out.append(h.digest()); i += 1
+    return b"".join(out)[:n]
+
+
+def _xor(a, b):
+    return (int.from_bytes(a, "big") ^ int.from_bytes(b, "big")).to_bytes(len(a), "big") if a else b""
+
+
+def _pw_bytes(pw):
+    return _ud.normalize("NFC", (pw or "").strip()).encode("utf-8")
+
+
+def _kek(pw, salt, it):
+    return _hl.pbkdf2_hmac("sha256", _pw_bytes(pw), salt, it, 64)
+
+
+def lock_data(obj, passwords, kind):
+    data = json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    dk, nonce = os.urandom(64), os.urandom(16)
+    ct = _xor(data, _keystream(dk[:32], nonce, len(data)))
+    mac = _hm.new(dk[32:], b"vbteam-locked-v1" + nonce + ct, _hl.sha256).digest()
+    slots = []
+    for pw in passwords:
+        salt, sn = os.urandom(16), os.urandom(16)
+        k = _kek(pw, salt, LOCK_ITER)
+        w = _xor(dk, _keystream(k[:32], sn, 64))
+        slots.append({"salt": _b64e(salt), "nonce": _b64e(sn), "key": _b64e(w),
+                      "mac": _b64e(_hm.new(k[32:], b"vbteam-slot-v1" + salt + sn + w, _hl.sha256).digest())})
+    return {"format": LOCK_FORMAT, "v": 1, "kind": kind, "kdf": {"alg": "pbkdf2-sha256", "iter": LOCK_ITER},
+            "slots": slots, "nonce": _b64e(nonce), "ct": _b64e(ct), "mac": _b64e(mac)}
+
+
+def is_locked(obj):
+    return isinstance(obj, dict) and obj.get("format") == LOCK_FORMAT
+
+
+def unlock_data(env, passwords):
+    """Returns (content, index of the password that opened it). Raises LockError('password') or LockError('damaged')."""
+    try:
+        if int(env.get("v") or 0) > 1:
+            raise LockError("newer")
+        it = int(env["kdf"]["iter"])
+        if not (1000 <= it <= 10000000):
+            raise LockError("damaged")
+        nonce, ct, mac = _b64d(env["nonce"]), _b64d(env["ct"]), _b64d(env["mac"])
+        slots = [(_b64d(x["salt"]), _b64d(x["nonce"]), _b64d(x["key"]), _b64d(x["mac"])) for x in env["slots"]]
+    except LockError:
+        raise
+    except (KeyError, TypeError, ValueError, AttributeError):
+        raise LockError("damaged")
+    for i, pw in enumerate(p for p in passwords if p):
+        for salt, sn, w, sm in slots:
+            k = _kek(pw, salt, it)
+            if not _hm.compare_digest(_hm.new(k[32:], b"vbteam-slot-v1" + salt + sn + w, _hl.sha256).digest(), sm):
+                continue
+            dk = _xor(w, _keystream(k[:32], sn, 64))
+            if not _hm.compare_digest(_hm.new(dk[32:], b"vbteam-locked-v1" + nonce + ct, _hl.sha256).digest(), mac):
+                raise LockError("damaged")
+            try:
+                return json.loads(_xor(ct, _keystream(dk[:32], nonce, len(ct))).decode("utf-8")), i
+            except ValueError:
+                raise LockError("damaged")
+    raise LockError("password")
+
+
+# The club's file password lives in this PC's database only (_meta), never in any file it sends out.
+# Older passwords are kept so files made before a change still open.
+def file_passwords():
+    conn = connect()
+    r = conn.execute("SELECT v FROM _meta WHERE k='file_password'").fetchone()
+    conn.close()
+    try:
+        v = json.loads(r[0]) if r else {}
+    except ValueError:
+        v = {}
+    if not v.get("current") and os.environ.get("VB_FILE_PASSWORD"):   # for automated set-ups and tests
+        v = {"current": os.environ["VB_FILE_PASSWORD"], "old": [], "carry": True}
+    return v
+
+
+def set_file_password(new, carry=True):
+    v = file_passwords()
+    old = ([v["current"]] if v.get("current") else []) + [p for p in v.get("old", []) if p != v.get("current")]
+    old = [p for p in old if p != new][:10]
+    conn = connect()
+    with conn:
+        conn.execute("INSERT OR REPLACE INTO _meta VALUES ('file_password', ?)",
+                     (json.dumps({"current": new, "old": old, "carry": bool(carry) and bool(old), "changed": now_iso()}),))
+    conn.close()
+
+
+def lock_for_send(obj, kind):
+    v = file_passwords()
+    if not v.get("current"):
+        raise LockError("nopassword")
+    pws = [v["current"]]
+    if kind == "setup" and v.get("carry") and v.get("old"):
+        pws.append(v["old"][0])                 # phones that only know the previous password can still open it...
+        obj = dict(obj, club_password=v["current"])   # ...and learn the new one from inside the locked file
+    elif kind == "setup":
+        obj = dict(obj, club_password=v["current"])
+    return lock_data(obj, pws, kind)
+
+
+def open_received(obj):
+    """Unlock a received file with the club password (or an older one). Plain files are refused."""
+    if isinstance(obj, dict) and obj.get("format") == SYNC_FORMAT:
+        raise LockError("plain")
+    if not is_locked(obj):
+        raise LockError("notours")
+    v = file_passwords()
+    if not v.get("current"):
+        raise LockError("nopassword")
+    data, i = unlock_data(obj, [v["current"]] + v.get("old", []))
+    if isinstance(data, dict):
+        data.pop("club_password", None)
+        if i > 0:
+            data["_older_password"] = True
+    return data
+
+
+LOCK_MESSAGES = {
+    "plain": "This file isn't locked. Update the Team app, then export it again.",
+    "notours": "This isn't a Team app sync file.",
+    "nopassword": "Set the club's file password first (Dashboard, File password).",
+    "password": "This file was locked with a different password. Check the password on the Dashboard (File password).",
+    "damaged": "This file is damaged or was changed after it was made, so it can't be trusted. Export it again.",
+    "newer": "This file is from a newer version of the app. Update Home Base first.",
+}
+
+
 def import_data(data, file_label="(upload)"):
     with IMPORT_LOCK:
         return _import_data(data, file_label)
@@ -392,7 +552,7 @@ def scrub_once():
             pass
     conn = connect()
     with conn:
-        conn.execute("INSERT OR REPLACE INTO _meta VALUES ('scrub_birth_age', ?)", (json.dumps({"at": now_iso(), "files": files, "backups": dbs, "seen": False}),))
+        conn.execute("INSERT OR REPLACE INTO _meta VALUES ('scrub_birth_age', ?)", (json.dumps({"at": now_iso(), "files": files, "backups": dbs, "seen": not (files or dbs)}),))
     conn.close()
     setup_db()   # rebuild the report views (the live database was compacted above)
     return files, dbs
@@ -433,6 +593,21 @@ def cloud_note():
             "itself, for example <code>C:\\vb-home-base</code>: close this window, move the folder, then start Home Base from its new place.</p></section>") % html.escape(HERE)
 
 
+def import_received(raw, label):
+    """A file from a phone or another Home Base: unlock it with the club password, then merge it."""
+    try:
+        data = open_received(json.loads(raw.decode("utf-8-sig")))
+    except ValueError:
+        return {"ok": False, "error": "That file isn't valid JSON."}
+    except LockError as e:
+        return {"ok": False, "error": LOCK_MESSAGES.get(str(e), LOCK_MESSAGES["damaged"])}
+    older = isinstance(data, dict) and data.pop("_older_password", False)
+    res = import_data(data, label)
+    if res.get("ok") and older:
+        res["note"] = "This file used an older password. Send that phone a new setup file so it learns the current one."
+    return res
+
+
 def import_inbox():
     results = []
     for path in sorted(glob.glob(os.path.join(INBOX, "*.json"))):
@@ -440,8 +615,8 @@ def import_inbox():
         try:
             with open(path, "rb") as f:
                 raw = f.read()
-            res = import_data(json.loads(raw.decode("utf-8-sig")), name)
-        except (ValueError, OSError) as e:
+            res = import_received(raw, name)
+        except OSError as e:
             res = {"ok": False, "error": "Couldn't read the file: %s" % e}
         if res.get("ok"):
             shutil.move(path, os.path.join(IMPORTS, datetime.datetime.now().strftime("%Y%m%d-%H%M%S-") + name))
@@ -682,12 +857,51 @@ def import_players(text, apply=False):
     return res
 
 
+def file_password_card():
+    v = file_passwords()
+    cur = v.get("current")
+    if not cur:
+        return """<section class='card terms-card' id='fpw'><h2>Set the club's file password</h2>
+      <p>Every sync and setup file is locked with this password, so only your club can open them. Files that aren't locked are refused. Pick a short phrase only your coaches will know (at least 8 characters), and tell it to them yourself, never in the same message as a file.</p>
+      <p><label>Password <input type='password' id='fpw-new' autocomplete='new-password' size='28'></label>
+         <label>Again <input type='password' id='fpw-again' autocomplete='new-password' size='28'></label>
+         <label><input type='checkbox' id='fpw-see'> Show</label></p>
+      <button class='btn' id='fpw-save'>Set password</button><div id='fpw-out'></div></section>""" + FPW_JS
+    when = (v.get("changed") or "")[:10]
+    return ("""<section class='card' id='fpw'><h2>File password</h2>
+      <p>Sync and setup files are locked with the club's file password%s. Phones ask for it the first time and can remember it.</p>
+      <p><button class='btn alt' id='fpw-show'>Show password</button> <code id='fpw-cur' hidden>%s</code></p>
+      <details><summary>Change the password</summary>
+      <p><label>New password <input type='password' id='fpw-new' autocomplete='new-password' size='28'></label>
+         <label>Again <input type='password' id='fpw-again' autocomplete='new-password' size='28'></label>
+         <label><input type='checkbox' id='fpw-see'> Show</label></p>
+      <p><label><input type='checkbox' id='fpw-carry' checked> Phones that know the old password can still open the next setup file, and learn the new password from it</label><br>
+      <span class='muted'>Untick this if the old password got out: then tell every coach the new one yourself. Files made before the change still open here.</span></p>
+      <button class='btn' id='fpw-save'>Change password</button><div id='fpw-out'></div></details></section>""" % (
+        (" (changed %s)" % html.escape(when)) if when else "", html.escape(cur))) + FPW_JS
+
+
+FPW_JS = """<script>(() => {
+  const g = id => document.getElementById(id), out = g('fpw-out');
+  if (g('fpw-show')) g('fpw-show').onclick = () => { g('fpw-cur').hidden = !g('fpw-cur').hidden; g('fpw-show').textContent = g('fpw-cur').hidden ? 'Show password' : 'Hide password'; };
+  g('fpw-see').onchange = e => { for (const id of ['fpw-new', 'fpw-again']) g(id).type = e.target.checked ? 'text' : 'password'; };
+  g('fpw-save').onclick = async () => {
+    const a = g('fpw-new').value.trim(), b = g('fpw-again').value.trim();
+    if (a !== b) { out.innerHTML = "<p class='bad'>The two passwords don't match.</p>"; return; }
+    const r = await (await fetch('/api/file-password', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({password: a, carry: g('fpw-carry') ? g('fpw-carry').checked : true})})).json();
+    if (!r.ok) { out.innerHTML = "<p class='bad'>" + r.error + "</p>"; return; }
+    out.innerHTML = "<p class='ok'>Saved. New setup files use it from now on.</p>"; setTimeout(() => location.reload(), 1500);
+  };
+})();</script>"""
+
+
 def dashboard():
     conn = connect()
     counts = [{"table": t, "rows": conn.execute('SELECT COUNT(*) FROM "%s" WHERE deleted = 0' % t).fetchone()[0]} for t in sync_tables(conn)]
     log = [dict(r) for r in conn.execute("SELECT at, device, file, added, updated, skipped FROM _import_log ORDER BY at DESC LIMIT 15")]
     conn.close()
-    body = cloud_note() + scrub_note() + """<section class='card' id='upd'><h2>Home Base updates</h2><p id='upd-msg' class='muted'>Checking for a newer version&hellip;</p>
+    body = cloud_note() + scrub_note() + file_password_card() + """<section class='card' id='upd'><h2>Home Base updates</h2><p id='upd-msg' class='muted'>Checking for a newer version&hellip;</p>
       <button class='btn alt' id='upd-again'>Check again</button></section>
     <section class='card'><h2>Import a sync file</h2>
       <p>Choose a sync file a coach exported from the Team app. Newer changes win; importing the same file twice changes nothing.</p>
@@ -732,7 +946,7 @@ def dashboard():
     document.getElementById('pgo').onclick = () => players(false);
     const out = document.getElementById('out');
     function show(name, r){ out.insertAdjacentHTML('beforeend', r.ok
-      ? `<p class='ok'>${name}: from ${r.from} — ` + Object.entries(r.tables).map(([t,s])=>`${t} +${s.added} / ${s.updated} updated`).filter(x=>!/\\+0 \\/ 0/.test(x)).join(', ') + `</p>`
+      ? `<p class='ok'>${name}: from ${r.from} — ` + Object.entries(r.tables).map(([t,s])=>`${t} +${s.added} / ${s.updated} updated`).filter(x=>!/\\+0 \\/ 0/.test(x)).join(', ') + `</p>` + (r.note ? `<p class='bad'>${r.note}</p>` : '')
       : `<p class='bad'>${name}: ${r.error}</p>`); }
     document.getElementById('go').onclick = async () => {
       const files = document.getElementById('f').files; out.innerHTML = '';
@@ -1843,8 +2057,11 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/report/links":
                 return self.send(links_page())
             if u.path == "/api/export":
-                kind = parse_qs(u.query).get("kind", ["setup"])[0]
-                data = json.dumps(build_export("all" if kind == "all" else "setup"), indent=1)
+                kind = "all" if parse_qs(u.query).get("kind", ["setup"])[0] == "all" else "setup"
+                try:
+                    data = json.dumps(lock_for_send(build_export(kind), kind))   # always locked
+                except LockError as e:
+                    return self.send(page("File password needed", "<p class='bad'>%s</p><p><a href='/'>Back to the Dashboard</a></p>" % html.escape(LOCK_MESSAGES.get(str(e), str(e)))), status=400)
                 name = "vb-%s-HomeBase-%s.json" % ("setup" if kind != "all" else "all", datetime.datetime.now().strftime("%Y%m%d-%H%M"))
                 return self.send(data, "application/json", extra={"Content-Disposition": 'attachment; filename="%s"' % name})
             self.send(page("Not found", "<p>Page not found.</p>"), status=404)
@@ -1889,6 +2106,17 @@ class Handler(BaseHTTPRequestHandler):
             except (csv.Error, sqlite3.Error) as e:
                 res = {"ok": False, "error": "Couldn't read that file: %s" % e}
             return self.send(json.dumps(res), "application/json")
+        if u.path == "/api/file-password":
+            n = int(self.headers.get("Content-Length") or 0)
+            try:
+                v = json.loads(self.rfile.read(n).decode("utf-8"))
+                pw = (v.get("password") or "").strip()
+            except (ValueError, AttributeError):
+                return self.send(json.dumps({"ok": False, "error": "Bad request."}), "application/json", 400)
+            if len(pw) < 8:
+                return self.send(json.dumps({"ok": False, "error": "Use at least 8 characters. A short phrase is easiest to remember."}), "application/json")
+            set_file_password(pw, carry=v.get("carry", True))
+            return self.send(json.dumps({"ok": True}), "application/json")
         if u.path == "/api/scrub-ok":
             scrub_seen()
             return self.send(json.dumps({"ok": True}), "application/json")
@@ -1900,12 +2128,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(json.dumps({"ok": False, "error": "File too large."}), "application/json", 413)
             raw = self.rfile.read(n)
             label = self.headers.get("X-File-Name") or "upload.json"
-            try:
-                from urllib.parse import unquote
-                label = unquote(label)
-                res = import_data(json.loads(raw.decode("utf-8-sig")), label)
-            except ValueError:
-                res = {"ok": False, "error": "That file isn't valid JSON."}
+            from urllib.parse import unquote
+            label = unquote(label)
+            res = import_received(raw, label)
             if res.get("ok"):
                 save_copy(raw, label)
             return self.send(json.dumps(res), "application/json")

@@ -39,6 +39,13 @@ IMPORT PLAYERS FROM A SPREADSHEET
 - Fill it in, save as CSV, choose it and click Preview. Check the preview, then Import these players.
 - Players already here (same first and last name) are updated, not added twice. Then send the setup file.
 
+FILE PASSWORD (LOCKED FILES)
+- Every sync and setup file is locked with the club's file password. Set it once on the Dashboard (File password),
+  then tell it to your coaches yourself: never in the same message as a file.
+- Files that aren't locked, or were changed after they were made, are refused.
+- Change it any time on the Dashboard. Files made before the change still open here, and the next setup file
+  passes the new password to the phones (untick that option if the old password got out).
+
 IMPORT DATA FROM A PHONE
 - On the phone: Team app > More > Sync > Export sync file, and send it to yourself.
 - On the PC: Dashboard > choose the file > Import.
